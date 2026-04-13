@@ -1,0 +1,674 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "adf-cal-dwh"
+        },
+        "AzureBlobStorage1_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'AzureBlobStorage1'"
+        },
+        "AzureDataLakeStorage1_accountKey": {
+            "type": "secureString",
+            "metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage1'"
+        },
+        "LS_BLOB_totalw1_DEV_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'LS_BLOB_totalw1_DEV'"
+        },
+        "AzureSqlDatabase_dev_test_stg_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'AzureSqlDatabase_dev_test_stg'"
+        },
+        "Oppono_Salesforce_full_clientSecret": {
+            "type": "secureString",
+            "metadata": "Secure string for 'clientSecret' of 'Oppono_Salesforce_full'"
+        },
+        "LS_ADDFUNDING_FULL_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'LS_ADDFUNDING_FULL'"
+        },
+        "AzureBlobStorage_DEV_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'AzureBlobStorage_DEV'"
+        },
+        "LS_LENDER_PORTFOLIO_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api-ca.themortgageoffice.com/LSS.svc/GetLenderPortfolio"
+        },
+        "LS_LOAN_BY_TS_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api-ca.themortgageoffice.com/"
+        },
+        "TMOLenderPortfolio_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api-ca.themortgageoffice.com/LSS.svc"
+        },
+        "AzureDataLakeStorage1_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://totalw1.dfs.core.windows.net/"
+        },
+        "AzureSqlDatabase_dev_test_stg_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "cal-dwh.database.windows.net"
+        },
+        "AzureSqlDatabase_dev_test_stg_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "cal_bi_analytics_dev"
+        },
+        "AzureSqlDatabase_dev_test_stg_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "caldwhsqladmin"
+        },
+        "Oppono_Salesforce_full_properties_typeProperties_environmentUrl": {
+            "type": "string",
+            "defaultValue": "https://opponolending.my.salesforce.com"
+        },
+        "Oppono_Salesforce_full_properties_typeProperties_clientId": {
+            "type": "string",
+            "defaultValue": "3MVG9KsVczVNcM8xl2dzvHG7HgnRXIjfRYYHs3KdEx3PXe7MSvqthL66X_qN47ydNFx9242PUP14YcI52lOin"
+        },
+        "TMOLenderPortfolio_full_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api-ca.themortgageoffice.com/LSS.svc"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/LS_LENDER_PORTFOLIO')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "RestService",
+                "typeProperties": {
+                    "url": "[parameters('LS_LENDER_PORTFOLIO_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/LS_LOAN_BY_TS')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "RestService",
+                "typeProperties": {
+                    "url": "[parameters('LS_LOAN_BY_TS_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TMOLenderPortfolio')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "RestService",
+                "typeProperties": {
+                    "url": "[parameters('TMOLenderPortfolio_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/AzureBlobStorage1')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobStorage",
+                "typeProperties": {
+                    "connectionString": "[parameters('AzureBlobStorage1_connectionString')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/AzureDataLakeStorage1')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]",
+                    "accountKey": {
+                        "type": "SecureString",
+                        "value": "[parameters('AzureDataLakeStorage1_accountKey')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/LS_BLOB_totalw1_DEV')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobStorage",
+                "typeProperties": {
+                    "connectionString": "[parameters('LS_BLOB_totalw1_DEV_connectionString')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/AzureSqlDatabase_dev_test_stg')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureSqlDatabase",
+                "typeProperties": {
+                    "server": "[parameters('AzureSqlDatabase_dev_test_stg_properties_typeProperties_server')]",
+                    "database": "[parameters('AzureSqlDatabase_dev_test_stg_properties_typeProperties_database')]",
+                    "encrypt": "mandatory",
+                    "trustServerCertificate": false,
+                    "authenticationType": "SQL",
+                    "userName": "[parameters('AzureSqlDatabase_dev_test_stg_properties_typeProperties_userName')]",
+                    "password": {
+                        "type": "SecureString",
+                        "value": "[parameters('AzureSqlDatabase_dev_test_stg_password')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/Oppono_Salesforce_full')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "SalesforceV2",
+                "typeProperties": {
+                    "environmentUrl": "[parameters('Oppono_Salesforce_full_properties_typeProperties_environmentUrl')]",
+                    "clientId": "[parameters('Oppono_Salesforce_full_properties_typeProperties_clientId')]",
+                    "clientSecret": {
+                        "type": "SecureString",
+                        "value": "[parameters('Oppono_Salesforce_full_clientSecret')]"
+                    },
+                    "apiVersion": "54.0",
+                    "authenticationType": "OAuth2ClientCredential"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TMOLenderPortfolio_full')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "RestService",
+                "typeProperties": {
+                    "url": "[parameters('TMOLenderPortfolio_full_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/LS_ADDFUNDING_FULL')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobStorage",
+                "typeProperties": {
+                    "connectionString": "[parameters('LS_ADDFUNDING_FULL_connectionString')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/AzureBlobStorage_DEV')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobStorage",
+                "typeProperties": {
+                    "connectionString": "[parameters('AzureBlobStorage_DEV_connectionString')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/CAL-AutoResolveintegrationRuntime')]",
+            "type": "Microsoft.DataFactory/factories/integrationRuntimes",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "Managed",
+                "typeProperties": {
+                    "computeProperties": {
+                        "location": "Canada Central",
+                        "dataFlowProperties": {
+                            "computeType": "General",
+                            "coreCount": 8,
+                            "timeToLive": 10,
+                            "cleanup": false,
+                            "customProperties": []
+                        },
+                        "pipelineExternalComputeScaleProperties": {
+                            "timeToLive": 60,
+                            "numberOfPipelineNodes": 1,
+                            "numberOfExternalNodes": 1
+                        }
+                    }
+                },
+                "managedVirtualNetwork": {
+                    "type": "ManagedVirtualNetworkReference",
+                    "referenceName": "default"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_SALESFORCE_DEV')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_SALESFORCEF_DEV",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "SalesforceV2Object",
+                "schema": [],
+                "typeProperties": {
+                    "objectApiName": "Account"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_SALESFORCE')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Oppono_Salesforce",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "SalesforceV2Object",
+                "schema": [],
+                "typeProperties": {
+                    "reportId": "00OOL000004gCIb2AM"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_SALESFORCE_DYN')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Oppono_Salesforce",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "src_obj_id": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "SalesforceV2Object",
+                "schema": [],
+                "typeProperties": {
+                    "objectApiName": {
+                        "value": "@dataset().src_obj_id",
+                        "type": "Expression"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/RestResource1')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "RestService1",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "RestResource",
+                "typeProperties": {
+                    "relativeUrl": "/services/data/v54.0/analytics/reports/{reportId}/describe"
+                },
+                "schema": []
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_Abhi_loanhistory')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Loan_history_abhi_test",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "__type",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ACH_BatchNumber",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ACH_TraceNumber",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ACH_TransNumber",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ACH_Transmission_DateTime",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "DateDue",
+                        "type": "date"
+                    },
+                    {
+                        "name": "DateRec",
+                        "type": "date"
+                    },
+                    {
+                        "name": "GroupRecID",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "LateCharge",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "LoanAccount",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "LoanBalance",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "LoanRecID",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "NSFSourceRecID",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Notes",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "PaidTo",
+                        "type": "date"
+                    },
+                    {
+                        "name": "PayMethod",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "RecID",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Reference",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "SourceApp",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "SourceTyp",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "SysCreatedBy",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "SysCreatedDate",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "ToBrokerFee",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToChargesInt",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToChargesPrin",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToCurrentBill",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToDefaultInterest",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToImpound",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToInterest",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToLateCharge",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToLenderFee",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToOtherPayments",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToOtherTaxFree",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToOtherTaxable",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToPastDue",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToPrepay",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToPrincipal",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToReserve",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToUnearnedDiscount",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "ToUnpaidInterest",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "TotalAmount",
+                        "type": "float",
+                        "precision": 15
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "abhi",
+                    "table": "loan_history_abhi_test"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/RestResource2')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "Is_abhi_loanhistory_v2",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "relativeUrl": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "RestResource",
+                "typeProperties": {
+                    "relativeUrl": {
+                        "value": "@dataset().relativeUrl",
+                        "type": "Expression"
+                    }
+                },
+                "schema": []
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_ADDFUNDING')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_ADDFUNDING",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "src_continer_name": {
+                        "type": "string"
+                    },
+                    "src_file_name": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "Excel",
+                "typeProperties": {
+                    "sheetName": "Sheet1",
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "fileName": {
+                            "value": "@dataset().src_file_name",
+                            "type": "Expression"
+                        },
+                        "container": {
+                            "value": "@dataset().src_continer_name",
+                            "type": "Expression"
+                        }
+                    },
+                    "firstRowAsHeader": true
+                },
+                "schema": []
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_ADDFUNDING_MOVE_FILE')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_ADDFUNDING",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "target_continer_name": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "fileName": {
+                            "value": "@concat('Fund_Adjustment_',formatDateTime(utcNow(),'yyyy_MM_dd_HH_mm'))",
+                            "type": "Expression"
+                        },
+                        "container": {
+                            "value": "@dataset().target_continer_name",
+                            "type": "Expression"
+                        }
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": true,
+                    "quoteChar": "\""
+                },
+                "schema": []
+            },
+            "dependsOn": []
+        }
+    ]
+}

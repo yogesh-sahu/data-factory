@@ -1,0 +1,2032 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "adf-cal-dwh"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/TGR_TMO_OTHER_DATA')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Trigger to pull loan history, lender portfolio and loan additional info pipelines.",
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "PL_LOAD_LOAN_ADDITIONAL_INFO",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    },
+                    {
+                        "pipelineReference": {
+                            "referenceName": "PL_LOAD_LOAN_HISTORY_DETAIL",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    },
+                    {
+                        "pipelineReference": {
+                            "referenceName": "PL_LOAD_LENDER_PORTFOLIO_DETAIL",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Day",
+                        "interval": 1,
+                        "startTime": "2025-05-30T01:00:00",
+                        "endTime": "2026-12-31T23:59:59",
+                        "timeZone": "Central Standard Time",
+                        "schedule": {
+                            "minutes": [
+                                0
+                            ],
+                            "hours": [
+                                1
+                            ]
+                        }
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TGR_TMO_OTHER_DATA_FULL')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "To load get loan by an, lender portfolio",
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "PL_LOAD_LOAN_ADDITIONAL_INFO_FULL",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    },
+                    {
+                        "pipelineReference": {
+                            "referenceName": "PL_LOAD_LENDER_PORTFOLIO_DETAIL_FULL",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Day",
+                        "interval": 1,
+                        "startTime": "2026-03-20T12:00:00",
+                        "timeZone": "India Standard Time",
+                        "schedule": {
+                            "minutes": [
+                                0
+                            ],
+                            "hours": [
+                                17
+                            ]
+                        }
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_LENDER_DETAIL_DEV')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Load the data using get lenders detail by timestamp API",
+                "activities": [
+                    {
+                        "name": "LOOKUP_LENDER_DETAILS",
+                        "description": "Get lender api details to load",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 5,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "Select * from vw_lender_detail_by_time_stamp\norder by w_year ,execution_seq_no",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_LENDER_DETAILS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_LENDER_DETAILS').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_PROCESS_LENDER_DETAILS_BY_TIME_STAMP",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_TMO_API_DELTA_LOAD_DEV",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "api_rk": {
+                                                "value": "@item().api_rk",
+                                                "type": "Expression"
+                                            },
+                                            "api_url": {
+                                                "value": "@item().api_url",
+                                                "type": "Expression"
+                                            },
+                                            "token": {
+                                                "value": "@item().token",
+                                                "type": "Expression"
+                                            },
+                                            "dbase_name": {
+                                                "value": "@item().dbase_name",
+                                                "type": "Expression"
+                                            },
+                                            "page_size": {
+                                                "value": "@item().page_size",
+                                                "type": "Expression"
+                                            },
+                                            "api_key_value": {
+                                                "value": "@item().key_value",
+                                                "type": "Expression"
+                                            },
+                                            "last_run_successfully": {
+                                                "value": "@item().last_run_successfully",
+                                                "type": "Expression"
+                                            },
+                                            "api_override_parameter_value": {
+                                                "value": "@item().api_override_parameter_value",
+                                                "type": "Expression"
+                                            },
+                                            "off_set": {
+                                                "value": "@item().off_set",
+                                                "type": "Expression"
+                                            },
+                                            "batch_id": {
+                                                "value": "@item().batch_id",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_DEV"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-05-19T12:43:06Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_SF_DATA_DEV')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Move salesforce data to Azure cloud",
+                "activities": [
+                    {
+                        "name": "LOOKUP_SALESFORCE_ENTITY_DETAILS",
+                        "description": "GET SF objects to load",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "SELECT * FROM vw_sf_obj_data",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL_DEV_DYN",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "stg_obj_name": "vw_sf_obj_data"
+                                }
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_SALESFORCE_ENTITY_DETAILS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_SALESFORCE_ENTITY_DETAILS').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_PROCESS_SF_DETAILS",
+                                    "description": "Call child pipeline to load salesforce data",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_PROCESS_SF_DELTA_LOAD_DEV",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "src_obj_id": {
+                                                "value": "@item().src_obj_id",
+                                                "type": "Expression"
+                                            },
+                                            "src_obj_uid": {
+                                                "value": "@item().src_obj_uid",
+                                                "type": "Expression"
+                                            },
+                                            "stg_obj_name": {
+                                                "value": "@item().stg_obj_name",
+                                                "type": "Expression"
+                                            },
+                                            "batch_id": {
+                                                "value": "@item().batch_id",
+                                                "type": "Expression"
+                                            },
+                                            "src_obj_col_name": {
+                                                "value": "@item().src_obj_col_name",
+                                                "type": "Expression"
+                                            },
+                                            "DataFetchSql": {
+                                                "value": "@item().DataFetchSql",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_DEV"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-01-23T06:07:44Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_LOAN_DETAIL_DEV')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Load the data using get loans detail by timestamp API",
+                "activities": [
+                    {
+                        "name": "LOOKUP_LOAN_DETAILS",
+                        "description": "Get loan api details to load",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 5,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "select * from vw_loan_detail_by_time_stamp\norder by key_value , off_set asc",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_LOAN_DETAILS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_LOAN_DETAILS').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_PROCESS_LOAN_DETAILS_BY_TIME_STAMP",
+                                    "description": "Call child pipeline to load the loans data",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_TMO_API_DELTA_LOAD_DEV",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "api_rk": {
+                                                "value": "@item().api_rk",
+                                                "type": "Expression"
+                                            },
+                                            "api_url": {
+                                                "value": "@item().api_url",
+                                                "type": "Expression"
+                                            },
+                                            "token": {
+                                                "value": "@item().token",
+                                                "type": "Expression"
+                                            },
+                                            "dbase_name": {
+                                                "value": "@item().dbase_name",
+                                                "type": "Expression"
+                                            },
+                                            "page_size": {
+                                                "value": "@item().page_size",
+                                                "type": "Expression"
+                                            },
+                                            "api_key_value": {
+                                                "value": "@item().key_value",
+                                                "type": "Expression"
+                                            },
+                                            "last_run_successfully": {
+                                                "value": "@item().last_run_successfully",
+                                                "type": "Expression"
+                                            },
+                                            "api_override_parameter_value": {
+                                                "value": "@item().api_override_parameter_value",
+                                                "type": "Expression"
+                                            },
+                                            "off_set": {
+                                                "value": "@item().off_set",
+                                                "type": "Expression"
+                                            },
+                                            "batch_id": {
+                                                "value": "@item().batch_id",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "EXEC_PL_CHILD_REFRESH_FCT_DATA",
+                        "description": "Call child pipeline to refresh the loans fact data",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [
+                            {
+                                "activity": "ForEach1",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "PL_CHILD_REFRESH_FCT_DATA_DEV",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {
+                                "api_code": {
+                                    "value": "GET_LOAN_BY_TS",
+                                    "type": "Expression"
+                                },
+                                "requested_by": {
+                                    "value": "@pipeline().Pipeline",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_DEV"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-04-16T09:07:18Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_SF_DATA')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Move salesforce data to Azure cloud",
+                "activities": [
+                    {
+                        "name": "LOOKUP_SALESFORCE_ENTITY_DETAILS",
+                        "description": "GET SF objects to load",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "SELECT * FROM vw_sf_obj_data",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_SALESFORCE_ENTITY_DETAILS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_SALESFORCE_ENTITY_DETAILS').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_PROCESS_SF_DETAILS",
+                                    "description": "Call child pipeline to load salesforce data",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_PROCESS_SF_DELTA_LOAD",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "src_obj_id": {
+                                                "value": "@item().src_obj_id",
+                                                "type": "Expression"
+                                            },
+                                            "src_obj_uid": {
+                                                "value": "@item().src_obj_uid",
+                                                "type": "Expression"
+                                            },
+                                            "stg_obj_name": {
+                                                "value": "@item().stg_obj_name",
+                                                "type": "Expression"
+                                            },
+                                            "batch_id": {
+                                                "value": "@item().batch_id",
+                                                "type": "Expression"
+                                            },
+                                            "src_obj_col_name": {
+                                                "value": "@item().src_obj_col_name",
+                                                "type": "Expression"
+                                            },
+                                            "DataFetchSql": {
+                                                "value": "@item().DataFetchSql",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_PROD"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-04-16T03:21:29Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_LOAN_DETAIL')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Load the data using get loans detail by timestamp API",
+                "activities": [
+                    {
+                        "name": "LOOKUP_LOAN_DETAILS",
+                        "description": "Get loan api details to load",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 5,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "select * from vw_loan_detail_by_time_stamp\norder by key_value , off_set asc",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_LOAN_DETAILS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_LOAN_DETAILS').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_PROCESS_LOAN_DETAILS_BY_TIME_STAMP",
+                                    "description": "Call child pipeline to load the loans data",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_TMO_API_DELTA_LOAD",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "api_rk": {
+                                                "value": "@item().api_rk",
+                                                "type": "Expression"
+                                            },
+                                            "api_url": {
+                                                "value": "@item().api_url",
+                                                "type": "Expression"
+                                            },
+                                            "token": {
+                                                "value": "@item().token",
+                                                "type": "Expression"
+                                            },
+                                            "dbase_name": {
+                                                "value": "@item().dbase_name",
+                                                "type": "Expression"
+                                            },
+                                            "page_size": {
+                                                "value": "@item().page_size",
+                                                "type": "Expression"
+                                            },
+                                            "api_key_value": {
+                                                "value": "@item().key_value",
+                                                "type": "Expression"
+                                            },
+                                            "last_run_successfully": {
+                                                "value": "@item().last_run_successfully",
+                                                "type": "Expression"
+                                            },
+                                            "api_override_parameter_value": {
+                                                "value": "@item().api_override_parameter_value",
+                                                "type": "Expression"
+                                            },
+                                            "off_set": {
+                                                "value": "@item().off_set",
+                                                "type": "Expression"
+                                            },
+                                            "batch_id": {
+                                                "value": "@item().batch_id",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "EXEC_PL_CHILD_REFRESH_FCT_DATA",
+                        "description": "Call child pipeline to refresh the loans fact data",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [
+                            {
+                                "activity": "ForEach1",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "PL_CHILD_REFRESH_FCT_DATA",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {
+                                "api_code": {
+                                    "value": "GET_LOAN_BY_TS",
+                                    "type": "Expression"
+                                },
+                                "requested_by": {
+                                    "value": "@pipeline().Pipeline",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_PROD"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-04-16T03:21:29Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_LENDER_DETAIL')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Load the data using get lenders detail by timestamp API",
+                "activities": [
+                    {
+                        "name": "LOOKUP_LENDER_DETAILS",
+                        "description": "Get lender api details to load",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 5,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "Select * from vw_lender_detail_by_time_stamp\norder by w_year ,execution_seq_no",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_LENDER_DETAILS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_LENDER_DETAILS').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_PROCESS_LENDER_DETAILS_BY_TIME_STAMP",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_TMO_API_DELTA_LOAD",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "api_rk": {
+                                                "value": "@item().api_rk",
+                                                "type": "Expression"
+                                            },
+                                            "api_url": {
+                                                "value": "@item().api_url",
+                                                "type": "Expression"
+                                            },
+                                            "token": {
+                                                "value": "@item().token",
+                                                "type": "Expression"
+                                            },
+                                            "dbase_name": {
+                                                "value": "@item().dbase_name",
+                                                "type": "Expression"
+                                            },
+                                            "page_size": {
+                                                "value": "@item().page_size",
+                                                "type": "Expression"
+                                            },
+                                            "api_key_value": {
+                                                "value": "@item().key_value",
+                                                "type": "Expression"
+                                            },
+                                            "last_run_successfully": {
+                                                "value": "@item().last_run_successfully",
+                                                "type": "Expression"
+                                            },
+                                            "api_override_parameter_value": {
+                                                "value": "@item().api_override_parameter_value",
+                                                "type": "Expression"
+                                            },
+                                            "off_set": {
+                                                "value": "@item().off_set",
+                                                "type": "Expression"
+                                            },
+                                            "batch_id": {
+                                                "value": "@item().batch_id",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_PROD"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-02-24T11:46:32Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_LENDER_PORTFOLIO_DEV')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "EXEC_PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL_DEV",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL_DEV",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {
+                                "VIEW_NAME": "vw_lender_portfolio"
+                            }
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_DEV"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-04-23T09:39:04Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_FUND_ADJUSTMENT_LENDER_PORTFOLIO_DEV')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Refresh the portfolio of the lenders those are used in latest adjustment",
+                "activities": [
+                    {
+                        "name": "EXEC_PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL_DEV",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL_DEV",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {
+                                "VIEW_NAME": "vw_latest_fund_adjusted_lender"
+                            }
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_DEV"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-04-25T11:03:58Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_FUND_ADJUSTMENT_LENDER_PORTFOLIO')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Refresh the portfolio of the lenders those are used in latest adjustment",
+                "activities": [
+                    {
+                        "name": "EXEC_PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {
+                                "VIEW_NAME": "vw_latest_fund_adjusted_lender"
+                            }
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_PROD"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-10-29T12:03:29Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TestLoansAIOuter')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Lookup3",
+                        "type": "Lookup",
+                        "dependsOn": [
+                            {
+                                "activity": "Lookup2",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "SELECT DISTINCT GroupNumber FROM LoanAdditionalInfoAPI",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL_DYN",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "stg_obj_name": "dim_loan"
+                                }
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "Lookup3",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('Lookup3').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "Execute Pipeline1",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "TestLoansAIInner",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "Directory": {
+                                                "value": "@pipeline().parameters.Directory",
+                                                "type": "Expression"
+                                            },
+                                            "GroupNumber": {
+                                                "value": "@item().GroupNumber",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "Lookup1",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "TRUNCATE TABLE LoanAdditionalInfoAPI; SELECT 1;",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "Lookup2",
+                        "type": "Lookup",
+                        "dependsOn": [
+                            {
+                                "activity": "Lookup1",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "WITH base_data\nAS (\n\tSELECT t2.account_no\n\t\t,FORMAT(GETDATE(), 'yyyyMMdd_hhmmss') AS batch_id\n\t\t,t1.api_rk\n\t\t,t1.api_code\n\t\t,REPLACE(t1.api_url, '#ACCOUNT_NO', t2.account_no) AS api_url\n\t\t,t1.api_desc\n\t\t,t1.api_type\n\t\t,t1.api_prop\n\t\t,t1.api_override_applicable\n\t\t,t1.api_override_parameter_value\n\t\t,t1.last_run_successfully\n\t\t,t1.execution_seq_no\n\t\t,t1.valid_flag\n\t\t,t1.valid_from_date\n\t\t,t1.valid_to_date\n\t\t,t1.created_by\n\t\t,t1.created_on\n\t\t,t1.updated_by\n\t\t,t1.updated_on\n\t\t,t1.token\n\t\t,t1.dbase_name\n\t\t,CAST(t2.loan_rk AS VARCHAR(10)) + '_' + t2.account_no AS key_value\n\tFROM vw_api_master t1\n\tCROSS JOIN dim_loan t2\n\tWHERE t1.api_code = 'GET_LOAN_BY_AN'\n\t\tAND t2.valid_flag = 'Y'\n\t)\n\t,numbered_data\nAS (\n\tSELECT *\n\t\t,ROW_NUMBER() OVER (\n\t\t\tORDER BY key_value ASC\n\t\t\t) AS RowNumber\n\t\t,-- Sequential numbering (no gaps)\n\t\tCOUNT(*) OVER () AS total_count\n\tFROM base_data\n\t)\nINSERT INTO LoanAdditionalInfoAPI (\n\tis_last_row\n\t,total_count\n\t,RowNumber\n\t,GroupNumber\n\t,account_no\n\t,api_rk\n\t,api_code\n\t,api_url\n\t,token\n\t,dbase_name\n\t,key_value\n\t)\nSELECT CASE \n\t\tWHEN RowNumber = total_count\n\t\t\tTHEN '1'\n\t\tELSE '0'\n\t\tEND AS is_last_row\n\t,total_count\n\t,RowNumber\n\t,((RowNumber - 1) / 450) + 1 AS GroupNumber\n\t,account_no\n\t,api_rk\n\t,api_code\n\t,api_url\n\t,token\n\t,dbase_name\n\t,key_value\nFROM numbered_data\nORDER BY RowNumber;\n\nSELECT 1;",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "Directory": {
+                        "type": "string",
+                        "defaultValue": "LoanAdditionalInfo"
+                    },
+                    "FileName": {
+                        "type": "string"
+                    }
+                },
+                "folder": {
+                    "name": "CAL TESTS"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-01-31T19:27:54Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_SF_DATA_DEVFULL')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "LOOKUP_SALESFORCE_ENTITY_DETAILS",
+                        "description": "GET SF objects to load",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "SELECT * FROM vw_sf_obj_data_full",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_SALESFORCE_ENTITY_DETAILS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_SALESFORCE_ENTITY_DETAILS').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_SF",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_PROCESS_SF_DELTA_LOAD_DEVFULL",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "src_obj_id": {
+                                                "value": "@item().src_obj_id",
+                                                "type": "Expression"
+                                            },
+                                            "src_obj_uid": {
+                                                "value": "@item().src_obj_uid",
+                                                "type": "Expression"
+                                            },
+                                            "stg_obj_name": {
+                                                "value": "@item().stg_obj_name",
+                                                "type": "Expression"
+                                            },
+                                            "batch_id": {
+                                                "value": "@item().batch_id",
+                                                "type": "Expression"
+                                            },
+                                            "src_obj_col_name": {
+                                                "value": "@item().src_obj_col_name",
+                                                "type": "Expression"
+                                            },
+                                            "DataFetchSql": {
+                                                "value": "@item().DataFetchSql",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "DEV_FULL"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-03-06T08:45:54Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_LOAN_DETAIL_DEVFULL')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "LOOKUP_LOAN_DETAILS",
+                        "description": "Get loan api details to load",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "select * from vw_loan_detail_by_time_stamp\norder by key_value , off_set asc",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_LOAN_DETAILS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_LOAN_DETAILS').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_PROCESS_LOAN_DETAILS_BY_TIME_STAMP",
+                                    "description": "Call child pipeline to load the loans data",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_TMO_API_DELTA_LOAD_DEVFULL",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "api_rk": {
+                                                "value": "@item().api_rk",
+                                                "type": "Expression"
+                                            },
+                                            "api_url": {
+                                                "value": "@item().api_url",
+                                                "type": "Expression"
+                                            },
+                                            "token": {
+                                                "value": "@item().token",
+                                                "type": "Expression"
+                                            },
+                                            "dbase_name": {
+                                                "value": "@item().dbase_name",
+                                                "type": "Expression"
+                                            },
+                                            "page_size": {
+                                                "value": "@item().page_size",
+                                                "type": "Expression"
+                                            },
+                                            "api_key_value": {
+                                                "value": "@item().key_value",
+                                                "type": "Expression"
+                                            },
+                                            "last_run_successfully": {
+                                                "value": "@item().last_run_successfully\r\n",
+                                                "type": "Expression"
+                                            },
+                                            "api_override_parameter_value": {
+                                                "value": "@item().api_override_parameter_value",
+                                                "type": "Expression"
+                                            },
+                                            "off_set": {
+                                                "value": "@item().off_set",
+                                                "type": "Expression"
+                                            },
+                                            "batch_id": {
+                                                "value": "@item().batch_id",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "DEV_FULL"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-02-27T06:39:03Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_LENDER_DETAIL_DEVFULL')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "LOOKUP_LENDER_DETAILS",
+                        "description": "Get lender api details to load",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "Select * from vw_lender_detail_by_time_stamp_full\norder by w_year ,execution_seq_no",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_LENDER_DETAILS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_LENDER_DETAILS').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_PROCESS_LENDER_DETAILS_BY_TIME_STAMP",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_TMO_API_DELTA_LOAD_DEVFULL",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "api_rk": {
+                                                "value": "@item().api_rk",
+                                                "type": "Expression"
+                                            },
+                                            "api_url": {
+                                                "value": "@item().api_url",
+                                                "type": "Expression"
+                                            },
+                                            "token": {
+                                                "value": "@item().token",
+                                                "type": "Expression"
+                                            },
+                                            "dbase_name": {
+                                                "value": "@item().dbase_name",
+                                                "type": "Expression"
+                                            },
+                                            "page_size": {
+                                                "value": "@item().page_size",
+                                                "type": "Expression"
+                                            },
+                                            "api_key_value": {
+                                                "value": "@item().key_value",
+                                                "type": "Expression"
+                                            },
+                                            "last_run_successfully": {
+                                                "value": "@item().last_run_successfully",
+                                                "type": "Expression"
+                                            },
+                                            "api_override_parameter_value": {
+                                                "value": "@item().api_override_parameter_value",
+                                                "type": "Expression"
+                                            },
+                                            "off_set": {
+                                                "value": "@item().off_set",
+                                                "type": "Expression"
+                                            },
+                                            "batch_id": {
+                                                "value": "@item().batch_id",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "DEV_FULL"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-02-27T06:36:09Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_SF_DATA_FULL')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Move salesforce data to Azure cloud",
+                "activities": [
+                    {
+                        "name": "LOOKUP_SALESFORCE_ENTITY_DETAILS",
+                        "description": "GET SF objects to load",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "SELECT * FROM vw_sf_obj_data_full",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL_FULL",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_SALESFORCE_ENTITY_DETAILS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_SALESFORCE_ENTITY_DETAILS').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_PROCESS_SF_DETAILS",
+                                    "description": "Call child pipeline to load salesforce data",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_PROCESS_SF_DELTA_LOAD_FULL",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "src_obj_id": {
+                                                "value": "@item().src_obj_id",
+                                                "type": "Expression"
+                                            },
+                                            "src_obj_uid": {
+                                                "value": "@item().src_obj_uid",
+                                                "type": "Expression"
+                                            },
+                                            "stg_obj_name": {
+                                                "value": "@item().stg_obj_name",
+                                                "type": "Expression"
+                                            },
+                                            "batch_id": {
+                                                "value": "@item().batch_id",
+                                                "type": "Expression"
+                                            },
+                                            "src_obj_col_name": {
+                                                "value": "@item().src_obj_col_name",
+                                                "type": "Expression"
+                                            },
+                                            "DataFetchSql": {
+                                                "value": "@item().DataFetchSql",
+                                                "type": "Expression"
+                                            },
+                                            "Directory": {
+                                                "value": "@pipeline().parameters.Directory",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "Directory": {
+                        "type": "string",
+                        "defaultValue": "Salesforce_full"
+                    }
+                },
+                "folder": {
+                    "name": "PROD_FULL"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-03-06T10:50:10Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_LOAN_DETAIL_FULL')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Load the data using get loans detail by timestamp API",
+                "activities": [
+                    {
+                        "name": "LOOKUP_LOAN_DETAILS",
+                        "description": "Get loan api details to load",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 5,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "select * from vw_loan_detail_by_time_stamp_full\norder by key_value , off_set asc",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL_FULL",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_LOAN_DETAILS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_LOAN_DETAILS').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_PROCESS_LOAN_DETAILS_BY_TIME_STAMP",
+                                    "description": "Call child pipeline to load the loans data",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_TMO_API_DELTA_LOAD_FULL",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "api_rk": {
+                                                "value": "@item().api_rk",
+                                                "type": "Expression"
+                                            },
+                                            "api_url": {
+                                                "value": "@item().api_url",
+                                                "type": "Expression"
+                                            },
+                                            "token": {
+                                                "value": "@item().token",
+                                                "type": "Expression"
+                                            },
+                                            "dbase_name": {
+                                                "value": "@item().dbase_name",
+                                                "type": "Expression"
+                                            },
+                                            "page_size": {
+                                                "value": "@item().page_size",
+                                                "type": "Expression"
+                                            },
+                                            "api_key_value": {
+                                                "value": "@item().key_value",
+                                                "type": "Expression"
+                                            },
+                                            "last_run_successfully": {
+                                                "value": "@item().last_run_successfully",
+                                                "type": "Expression"
+                                            },
+                                            "api_override_parameter_value": {
+                                                "value": "@item().api_override_parameter_value",
+                                                "type": "Expression"
+                                            },
+                                            "off_set": {
+                                                "value": "@item().off_set",
+                                                "type": "Expression"
+                                            },
+                                            "batch_id": {
+                                                "value": "@item().batch_id",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "PROD_FULL"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-02-27T17:09:50Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/pipeline3')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Lookup1",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "SELECT 10 AS GroupNumber;",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "Lookup1",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('Lookup1').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "Execute Pipeline1",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_LOAD_ADDITIONAL_INFO_DEVFULL",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "GroupNumber": {
+                                                "value": "@item().GroupNumber",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL TESTS"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-03-02T07:58:21Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/pipeline3_fulltest')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Lookup1",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "\nSELECT 1 AS GroupNumber;",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "Lookup1",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('Lookup1').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "Execute Pipeline1",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_LOAD_LOAN_ADDITIONAL_INFO_FULL",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "GroupNumber": {
+                                                "value": "@item().GroupNumber",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "PROD_FULL"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-03-04T08:34:40Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TGR_TMO_LOAN_DATA')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Trigger to pull the TMO loan data by timestamp on daily basis",
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "PL_LOAD_LOAN_DETAIL",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Day",
+                        "interval": 1,
+                        "startTime": "2025-01-15T01:00:00",
+                        "endTime": "2026-12-31T23:59:59",
+                        "timeZone": "Central Standard Time",
+                        "schedule": {
+                            "minutes": [
+                                30
+                            ],
+                            "hours": [
+                                0
+                            ]
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/PL_LOAD_LOAN_DETAIL')]"
+            ]
+        }
+    ]
+}

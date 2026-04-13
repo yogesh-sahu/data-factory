@@ -1,0 +1,762 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "adf-cal-dwh"
+        },
+        "LS_AzureSql_CAL_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'LS_AzureSql_CAL'"
+        },
+        "Salesforce1_clientSecret": {
+            "type": "secureString",
+            "metadata": "Secure string for 'clientSecret' of 'Salesforce1'"
+        },
+        "Salesforce2_clientSecret": {
+            "type": "secureString",
+            "metadata": "Secure string for 'clientSecret' of 'Salesforce2'"
+        },
+        "Salesforce3_clientSecret": {
+            "type": "secureString",
+            "metadata": "Secure string for 'clientSecret' of 'Salesforce3'"
+        },
+        "Oppono_Salesforce_clientSecret": {
+            "type": "secureString",
+            "metadata": "Secure string for 'clientSecret' of 'Oppono_Salesforce'"
+        },
+        "LS_SALESFORCEF_DEV_clientSecret": {
+            "type": "secureString",
+            "metadata": "Secure string for 'clientSecret' of 'LS_SALESFORCEF_DEV'"
+        },
+        "RestService1_clientSecret": {
+            "type": "secureString",
+            "metadata": "Secure string for 'clientSecret' of 'RestService1'"
+        },
+        "Loan_history_abhi_test_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'Loan_history_abhi_test'"
+        },
+        "LS_ADDFUNDING_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'LS_ADDFUNDING'"
+        },
+        "LS_AzureSql_CAL_DEV_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'LS_AzureSql_CAL_DEV'"
+        },
+        "LS_Test_Auto_Blob_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'LS_Test_Auto_Blob'"
+        },
+        "LS_Test_Auto_Blob_Trgt_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'LS_Test_Auto_Blob_Trgt'"
+        },
+        "LS_GetLoan_Trgt_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'LS_GetLoan_Trgt'"
+        },
+        "LS_Prod_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'LS_Prod'"
+        },
+        "LS_Dev_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'LS_Dev'"
+        },
+        "AzureSqlDatabase1_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'AzureSqlDatabase1'"
+        },
+        "LS_Salesforce_Preprod_Appraisal_clientSecret": {
+            "type": "secureString",
+            "metadata": "Secure string for 'clientSecret' of 'LS_Salesforce_Preprod_Appraisal'"
+        },
+        "AzureBlobStorage1_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'AzureBlobStorage1'"
+        },
+        "AzureDataLakeStorage1_accountKey": {
+            "type": "secureString",
+            "metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage1'"
+        },
+        "LS_BLOB_totalw1_DEV_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'LS_BLOB_totalw1_DEV'"
+        },
+        "AzureSqlDatabase_dev_test_stg_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'AzureSqlDatabase_dev_test_stg'"
+        },
+        "LS_AzureSql_CAL_FULL_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'LS_AzureSql_CAL_FULL'"
+        },
+        "Oppono_Salesforce_full_clientSecret": {
+            "type": "secureString",
+            "metadata": "Secure string for 'clientSecret' of 'Oppono_Salesforce_full'"
+        },
+        "LS_ADDFUNDING_FULL_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'LS_ADDFUNDING_FULL'"
+        },
+        "AzureBlobStorage_DEV_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'AzureBlobStorage_DEV'"
+        },
+        "TGR_Test_Auto_Blob_properties_typeProperties_scope": {
+            "type": "string",
+            "defaultValue": "/subscriptions/f5f79f17-b917-4237-9802-4d18b66abdb4/resourceGroups/CAL-DWH-RG/providers/Microsoft.Storage/storageAccounts/totalw1"
+        },
+        "LS_AzureSql_CAL_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "cal-dwh.database.windows.net"
+        },
+        "LS_AzureSql_CAL_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "cal_bi_analytics"
+        },
+        "LS_AzureSql_CAL_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "caldwhsqladmin"
+        },
+        "Salesforce1_properties_typeProperties_environmentUrl": {
+            "type": "string",
+            "defaultValue": "https://opponolending.my.salesforce.com"
+        },
+        "Salesforce1_properties_typeProperties_clientId": {
+            "type": "string",
+            "defaultValue": "3MVG9KsVczVNcM8xl2dzvHG7HgrcyTQXPg78vY7IvA0CC5NtqvDyfoT7LYZfpje7d5MqE9a7rkzvJXtMIzKcP"
+        },
+        "Salesforce2_properties_typeProperties_environmentUrl": {
+            "type": "string",
+            "defaultValue": "https://opponolending.my.salesforce.com"
+        },
+        "Salesforce2_properties_typeProperties_clientId": {
+            "type": "string",
+            "defaultValue": "3MVG9KsVczVNcM8xl2dzvHG7HgtRWpRNj5sK0WG02H0iDQZ0_LkBELceVNcbaAI7k7ZBqb2UROOZeVLrm6SPO"
+        },
+        "Salesforce3_properties_typeProperties_environmentUrl": {
+            "type": "string",
+            "defaultValue": "https://page-connect-833.my.salesforce.com/"
+        },
+        "Salesforce3_properties_typeProperties_clientId": {
+            "type": "string",
+            "defaultValue": "3MVG9Kr5_mB04D166d8ZpJmBFCslBqS2.Ui5ETNPffWF0UhfcoWMfI5MYY6z6iGAdt3YkpWjK1KuZZFMirGpA"
+        },
+        "Oppono_Salesforce_properties_typeProperties_environmentUrl": {
+            "type": "string",
+            "defaultValue": "https://opponolending.my.salesforce.com"
+        },
+        "Oppono_Salesforce_properties_typeProperties_clientId": {
+            "type": "string",
+            "defaultValue": "3MVG9KsVczVNcM8xl2dzvHG7HgnRXIjfRYYHs3KdEx3PXe7MSvqthL66X_qN47ydNFx9242PUP14YcI52lOin"
+        },
+        "LS_SALESFORCEF_DEV_properties_typeProperties_environmentUrl": {
+            "type": "string",
+            "defaultValue": "https://proclink-dev-ed.develop.my.salesforce.com/"
+        },
+        "LS_SALESFORCEF_DEV_properties_typeProperties_clientId": {
+            "type": "string",
+            "defaultValue": "3MVG9WVXk15qiz1Jbb64Q7pMPL.pGzfOnIAF4UkjGSYDAs7BsgexoMd1.HEr1ost9eCW2J0Q1Kwq61mNZrFdv"
+        },
+        "RestService1_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://opponolending.my.salesforce.com/services/data/v54.0/"
+        },
+        "RestService1_properties_typeProperties_clientId": {
+            "type": "string",
+            "defaultValue": "3MVG9KsVczVNcM8xl2dzvHG7HgnRXIjfRYYHs3KdEx3PXe7MSvqthL66X_qN47ydNFx9242PUP14YcI52lOin"
+        },
+        "Loan_history_abhi_test_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "cal-dwh.database.windows.net"
+        },
+        "Loan_history_abhi_test_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "cal_bi_analytics_dev"
+        },
+        "Loan_history_abhi_test_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "caldwhsqladmin"
+        },
+        "ls_Abhi_loanhistory_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api-ca.themortgageoffice.com/LSS.svc/GetLoanHistory/"
+        },
+        "Is_abhi_loanhistory_v2_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api-ca.themortgageoffice.com/LSS.svc/"
+        },
+        "LS_AzureSql_CAL_DEV_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "cal-dwh.database.windows.net"
+        },
+        "LS_AzureSql_CAL_DEV_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "cal_bi_analytics_dev"
+        },
+        "LS_AzureSql_CAL_DEV_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "caldwhsqladmin"
+        },
+        "LS_Test_Auto_Blob_Trgt_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "cal-dwh.database.windows.net"
+        },
+        "LS_Test_Auto_Blob_Trgt_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "cal_bi_analytics"
+        },
+        "LS_Test_Auto_Blob_Trgt_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "caldwhsqladmin"
+        },
+        "LS_GetLoan_Trgt_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "cal-dwh.database.windows.net"
+        },
+        "LS_GetLoan_Trgt_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "cal_bi_analytics"
+        },
+        "LS_GetLoan_Trgt_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "caldwhsqladmin"
+        },
+        "LS_RestService_SRC_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api-ca.themortgageoffice.com/LSS.svc/GetLoan/114548"
+        },
+        "LS_Prod_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "cal-dwh.database.windows.net"
+        },
+        "LS_Prod_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "cal_bi_analytics"
+        },
+        "LS_Prod_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "caldwhsqladmin"
+        },
+        "LS_Dev_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "cal-dwh.database.windows.net"
+        },
+        "LS_Dev_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "cal_bi_analytics_dev"
+        },
+        "LS_Dev_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "caldwhsqladmin"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "cal-dwh.database.windows.net"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "cal_bi_analytics"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "caldwhsqladmin"
+        },
+        "LS_Salesforce_Preprod_Appraisal_properties_typeProperties_environmentUrl": {
+            "type": "string",
+            "defaultValue": "https://opponolending--preprod.sandbox.my.salesforce.com"
+        },
+        "LS_Salesforce_Preprod_Appraisal_properties_typeProperties_clientId": {
+            "type": "string",
+            "defaultValue": "3MVG96qSbA1.IAaxms94iGsL57wY8GcDFNCEH0UTCx8MeC73K01X1ku17N.Y4lsiWAs5dk_G8yprsOosGo6WM"
+        },
+        "LS_LENDER_PORTFOLIO_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api-ca.themortgageoffice.com/LSS.svc/GetLenderPortfolio"
+        },
+        "LS_LOAN_BY_TS_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api-ca.themortgageoffice.com/"
+        },
+        "TMOLenderPortfolio_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api-ca.themortgageoffice.com/LSS.svc"
+        },
+        "AzureDataLakeStorage1_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://totalw1.dfs.core.windows.net/"
+        },
+        "AzureSqlDatabase_dev_test_stg_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "cal-dwh.database.windows.net"
+        },
+        "AzureSqlDatabase_dev_test_stg_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "cal_bi_analytics_dev"
+        },
+        "AzureSqlDatabase_dev_test_stg_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "caldwhsqladmin"
+        },
+        "LS_AzureSql_CAL_FULL_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "cal-dwh.database.windows.net"
+        },
+        "LS_AzureSql_CAL_FULL_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "cal_bi_analytics"
+        },
+        "LS_AzureSql_CAL_FULL_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "caldwhsqladmin"
+        },
+        "Oppono_Salesforce_full_properties_typeProperties_environmentUrl": {
+            "type": "string",
+            "defaultValue": "https://opponolending.my.salesforce.com"
+        },
+        "Oppono_Salesforce_full_properties_typeProperties_clientId": {
+            "type": "string",
+            "defaultValue": "3MVG9KsVczVNcM8xl2dzvHG7HgnRXIjfRYYHs3KdEx3PXe7MSvqthL66X_qN47ydNFx9242PUP14YcI52lOin"
+        },
+        "TMOLenderPortfolio_full_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api-ca.themortgageoffice.com/LSS.svc"
+        },
+        "containerUri": {
+            "type": "string",
+            "metadata": "URI to storage account containing linked ARM templates"
+        },
+        "containerSasToken": {
+            "type": "string",
+            "metadata": "Sas token to storage account containing linked ARM templates"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "adf-cal-dwh_ArmTemplate_0",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-03-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "factoryName": {
+                        "value": "[parameters('factoryName')]"
+                    },
+                    "Salesforce1_clientSecret": {
+                        "value": "[parameters('Salesforce1_clientSecret')]"
+                    },
+                    "Salesforce2_clientSecret": {
+                        "value": "[parameters('Salesforce2_clientSecret')]"
+                    },
+                    "Salesforce3_clientSecret": {
+                        "value": "[parameters('Salesforce3_clientSecret')]"
+                    },
+                    "Oppono_Salesforce_clientSecret": {
+                        "value": "[parameters('Oppono_Salesforce_clientSecret')]"
+                    },
+                    "LS_SALESFORCEF_DEV_clientSecret": {
+                        "value": "[parameters('LS_SALESFORCEF_DEV_clientSecret')]"
+                    },
+                    "RestService1_clientSecret": {
+                        "value": "[parameters('RestService1_clientSecret')]"
+                    },
+                    "Loan_history_abhi_test_password": {
+                        "value": "[parameters('Loan_history_abhi_test_password')]"
+                    },
+                    "LS_ADDFUNDING_connectionString": {
+                        "value": "[parameters('LS_ADDFUNDING_connectionString')]"
+                    },
+                    "LS_Test_Auto_Blob_connectionString": {
+                        "value": "[parameters('LS_Test_Auto_Blob_connectionString')]"
+                    },
+                    "LS_Test_Auto_Blob_Trgt_password": {
+                        "value": "[parameters('LS_Test_Auto_Blob_Trgt_password')]"
+                    },
+                    "LS_GetLoan_Trgt_password": {
+                        "value": "[parameters('LS_GetLoan_Trgt_password')]"
+                    },
+                    "LS_Prod_password": {
+                        "value": "[parameters('LS_Prod_password')]"
+                    },
+                    "LS_Dev_password": {
+                        "value": "[parameters('LS_Dev_password')]"
+                    },
+                    "AzureSqlDatabase1_password": {
+                        "value": "[parameters('AzureSqlDatabase1_password')]"
+                    },
+                    "LS_Salesforce_Preprod_Appraisal_clientSecret": {
+                        "value": "[parameters('LS_Salesforce_Preprod_Appraisal_clientSecret')]"
+                    },
+                    "Salesforce1_properties_typeProperties_environmentUrl": {
+                        "value": "[parameters('Salesforce1_properties_typeProperties_environmentUrl')]"
+                    },
+                    "Salesforce1_properties_typeProperties_clientId": {
+                        "value": "[parameters('Salesforce1_properties_typeProperties_clientId')]"
+                    },
+                    "Salesforce2_properties_typeProperties_environmentUrl": {
+                        "value": "[parameters('Salesforce2_properties_typeProperties_environmentUrl')]"
+                    },
+                    "Salesforce2_properties_typeProperties_clientId": {
+                        "value": "[parameters('Salesforce2_properties_typeProperties_clientId')]"
+                    },
+                    "Salesforce3_properties_typeProperties_environmentUrl": {
+                        "value": "[parameters('Salesforce3_properties_typeProperties_environmentUrl')]"
+                    },
+                    "Salesforce3_properties_typeProperties_clientId": {
+                        "value": "[parameters('Salesforce3_properties_typeProperties_clientId')]"
+                    },
+                    "Oppono_Salesforce_properties_typeProperties_environmentUrl": {
+                        "value": "[parameters('Oppono_Salesforce_properties_typeProperties_environmentUrl')]"
+                    },
+                    "Oppono_Salesforce_properties_typeProperties_clientId": {
+                        "value": "[parameters('Oppono_Salesforce_properties_typeProperties_clientId')]"
+                    },
+                    "LS_SALESFORCEF_DEV_properties_typeProperties_environmentUrl": {
+                        "value": "[parameters('LS_SALESFORCEF_DEV_properties_typeProperties_environmentUrl')]"
+                    },
+                    "LS_SALESFORCEF_DEV_properties_typeProperties_clientId": {
+                        "value": "[parameters('LS_SALESFORCEF_DEV_properties_typeProperties_clientId')]"
+                    },
+                    "RestService1_properties_typeProperties_url": {
+                        "value": "[parameters('RestService1_properties_typeProperties_url')]"
+                    },
+                    "RestService1_properties_typeProperties_clientId": {
+                        "value": "[parameters('RestService1_properties_typeProperties_clientId')]"
+                    },
+                    "Loan_history_abhi_test_properties_typeProperties_server": {
+                        "value": "[parameters('Loan_history_abhi_test_properties_typeProperties_server')]"
+                    },
+                    "Loan_history_abhi_test_properties_typeProperties_database": {
+                        "value": "[parameters('Loan_history_abhi_test_properties_typeProperties_database')]"
+                    },
+                    "Loan_history_abhi_test_properties_typeProperties_userName": {
+                        "value": "[parameters('Loan_history_abhi_test_properties_typeProperties_userName')]"
+                    },
+                    "ls_Abhi_loanhistory_properties_typeProperties_url": {
+                        "value": "[parameters('ls_Abhi_loanhistory_properties_typeProperties_url')]"
+                    },
+                    "Is_abhi_loanhistory_v2_properties_typeProperties_url": {
+                        "value": "[parameters('Is_abhi_loanhistory_v2_properties_typeProperties_url')]"
+                    },
+                    "LS_Test_Auto_Blob_Trgt_properties_typeProperties_server": {
+                        "value": "[parameters('LS_Test_Auto_Blob_Trgt_properties_typeProperties_server')]"
+                    },
+                    "LS_Test_Auto_Blob_Trgt_properties_typeProperties_database": {
+                        "value": "[parameters('LS_Test_Auto_Blob_Trgt_properties_typeProperties_database')]"
+                    },
+                    "LS_Test_Auto_Blob_Trgt_properties_typeProperties_userName": {
+                        "value": "[parameters('LS_Test_Auto_Blob_Trgt_properties_typeProperties_userName')]"
+                    },
+                    "LS_GetLoan_Trgt_properties_typeProperties_server": {
+                        "value": "[parameters('LS_GetLoan_Trgt_properties_typeProperties_server')]"
+                    },
+                    "LS_GetLoan_Trgt_properties_typeProperties_database": {
+                        "value": "[parameters('LS_GetLoan_Trgt_properties_typeProperties_database')]"
+                    },
+                    "LS_GetLoan_Trgt_properties_typeProperties_userName": {
+                        "value": "[parameters('LS_GetLoan_Trgt_properties_typeProperties_userName')]"
+                    },
+                    "LS_RestService_SRC_properties_typeProperties_url": {
+                        "value": "[parameters('LS_RestService_SRC_properties_typeProperties_url')]"
+                    },
+                    "LS_Prod_properties_typeProperties_server": {
+                        "value": "[parameters('LS_Prod_properties_typeProperties_server')]"
+                    },
+                    "LS_Prod_properties_typeProperties_database": {
+                        "value": "[parameters('LS_Prod_properties_typeProperties_database')]"
+                    },
+                    "LS_Prod_properties_typeProperties_userName": {
+                        "value": "[parameters('LS_Prod_properties_typeProperties_userName')]"
+                    },
+                    "LS_Dev_properties_typeProperties_server": {
+                        "value": "[parameters('LS_Dev_properties_typeProperties_server')]"
+                    },
+                    "LS_Dev_properties_typeProperties_database": {
+                        "value": "[parameters('LS_Dev_properties_typeProperties_database')]"
+                    },
+                    "LS_Dev_properties_typeProperties_userName": {
+                        "value": "[parameters('LS_Dev_properties_typeProperties_userName')]"
+                    },
+                    "AzureSqlDatabase1_properties_typeProperties_server": {
+                        "value": "[parameters('AzureSqlDatabase1_properties_typeProperties_server')]"
+                    },
+                    "AzureSqlDatabase1_properties_typeProperties_database": {
+                        "value": "[parameters('AzureSqlDatabase1_properties_typeProperties_database')]"
+                    },
+                    "AzureSqlDatabase1_properties_typeProperties_userName": {
+                        "value": "[parameters('AzureSqlDatabase1_properties_typeProperties_userName')]"
+                    },
+                    "LS_Salesforce_Preprod_Appraisal_properties_typeProperties_environmentUrl": {
+                        "value": "[parameters('LS_Salesforce_Preprod_Appraisal_properties_typeProperties_environmentUrl')]"
+                    },
+                    "LS_Salesforce_Preprod_Appraisal_properties_typeProperties_clientId": {
+                        "value": "[parameters('LS_Salesforce_Preprod_Appraisal_properties_typeProperties_clientId')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "adf-cal-dwh_ArmTemplate_1",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-03-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "factoryName": {
+                        "value": "[parameters('factoryName')]"
+                    },
+                    "AzureBlobStorage1_connectionString": {
+                        "value": "[parameters('AzureBlobStorage1_connectionString')]"
+                    },
+                    "AzureDataLakeStorage1_accountKey": {
+                        "value": "[parameters('AzureDataLakeStorage1_accountKey')]"
+                    },
+                    "LS_BLOB_totalw1_DEV_connectionString": {
+                        "value": "[parameters('LS_BLOB_totalw1_DEV_connectionString')]"
+                    },
+                    "AzureSqlDatabase_dev_test_stg_password": {
+                        "value": "[parameters('AzureSqlDatabase_dev_test_stg_password')]"
+                    },
+                    "Oppono_Salesforce_full_clientSecret": {
+                        "value": "[parameters('Oppono_Salesforce_full_clientSecret')]"
+                    },
+                    "LS_ADDFUNDING_FULL_connectionString": {
+                        "value": "[parameters('LS_ADDFUNDING_FULL_connectionString')]"
+                    },
+                    "AzureBlobStorage_DEV_connectionString": {
+                        "value": "[parameters('AzureBlobStorage_DEV_connectionString')]"
+                    },
+                    "LS_LENDER_PORTFOLIO_properties_typeProperties_url": {
+                        "value": "[parameters('LS_LENDER_PORTFOLIO_properties_typeProperties_url')]"
+                    },
+                    "LS_LOAN_BY_TS_properties_typeProperties_url": {
+                        "value": "[parameters('LS_LOAN_BY_TS_properties_typeProperties_url')]"
+                    },
+                    "TMOLenderPortfolio_properties_typeProperties_url": {
+                        "value": "[parameters('TMOLenderPortfolio_properties_typeProperties_url')]"
+                    },
+                    "AzureDataLakeStorage1_properties_typeProperties_url": {
+                        "value": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]"
+                    },
+                    "AzureSqlDatabase_dev_test_stg_properties_typeProperties_server": {
+                        "value": "[parameters('AzureSqlDatabase_dev_test_stg_properties_typeProperties_server')]"
+                    },
+                    "AzureSqlDatabase_dev_test_stg_properties_typeProperties_database": {
+                        "value": "[parameters('AzureSqlDatabase_dev_test_stg_properties_typeProperties_database')]"
+                    },
+                    "AzureSqlDatabase_dev_test_stg_properties_typeProperties_userName": {
+                        "value": "[parameters('AzureSqlDatabase_dev_test_stg_properties_typeProperties_userName')]"
+                    },
+                    "Oppono_Salesforce_full_properties_typeProperties_environmentUrl": {
+                        "value": "[parameters('Oppono_Salesforce_full_properties_typeProperties_environmentUrl')]"
+                    },
+                    "Oppono_Salesforce_full_properties_typeProperties_clientId": {
+                        "value": "[parameters('Oppono_Salesforce_full_properties_typeProperties_clientId')]"
+                    },
+                    "TMOLenderPortfolio_full_properties_typeProperties_url": {
+                        "value": "[parameters('TMOLenderPortfolio_full_properties_typeProperties_url')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'adf-cal-dwh_ArmTemplate_0')]"
+            ]
+        },
+        {
+            "name": "adf-cal-dwh_ArmTemplate_2",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-03-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/ArmTemplate_2.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "factoryName": {
+                        "value": "[parameters('factoryName')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'adf-cal-dwh_ArmTemplate_1')]"
+            ]
+        },
+        {
+            "name": "adf-cal-dwh_ArmTemplate_3",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-03-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/ArmTemplate_3.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "factoryName": {
+                        "value": "[parameters('factoryName')]"
+                    },
+                    "LS_AzureSql_CAL_password": {
+                        "value": "[parameters('LS_AzureSql_CAL_password')]"
+                    },
+                    "LS_AzureSql_CAL_DEV_password": {
+                        "value": "[parameters('LS_AzureSql_CAL_DEV_password')]"
+                    },
+                    "LS_AzureSql_CAL_FULL_password": {
+                        "value": "[parameters('LS_AzureSql_CAL_FULL_password')]"
+                    },
+                    "LS_AzureSql_CAL_properties_typeProperties_server": {
+                        "value": "[parameters('LS_AzureSql_CAL_properties_typeProperties_server')]"
+                    },
+                    "LS_AzureSql_CAL_properties_typeProperties_database": {
+                        "value": "[parameters('LS_AzureSql_CAL_properties_typeProperties_database')]"
+                    },
+                    "LS_AzureSql_CAL_properties_typeProperties_userName": {
+                        "value": "[parameters('LS_AzureSql_CAL_properties_typeProperties_userName')]"
+                    },
+                    "LS_AzureSql_CAL_DEV_properties_typeProperties_server": {
+                        "value": "[parameters('LS_AzureSql_CAL_DEV_properties_typeProperties_server')]"
+                    },
+                    "LS_AzureSql_CAL_DEV_properties_typeProperties_database": {
+                        "value": "[parameters('LS_AzureSql_CAL_DEV_properties_typeProperties_database')]"
+                    },
+                    "LS_AzureSql_CAL_DEV_properties_typeProperties_userName": {
+                        "value": "[parameters('LS_AzureSql_CAL_DEV_properties_typeProperties_userName')]"
+                    },
+                    "LS_AzureSql_CAL_FULL_properties_typeProperties_server": {
+                        "value": "[parameters('LS_AzureSql_CAL_FULL_properties_typeProperties_server')]"
+                    },
+                    "LS_AzureSql_CAL_FULL_properties_typeProperties_database": {
+                        "value": "[parameters('LS_AzureSql_CAL_FULL_properties_typeProperties_database')]"
+                    },
+                    "LS_AzureSql_CAL_FULL_properties_typeProperties_userName": {
+                        "value": "[parameters('LS_AzureSql_CAL_FULL_properties_typeProperties_userName')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'adf-cal-dwh_ArmTemplate_2')]"
+            ]
+        },
+        {
+            "name": "adf-cal-dwh_ArmTemplate_4",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-03-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/ArmTemplate_4.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "factoryName": {
+                        "value": "[parameters('factoryName')]"
+                    },
+                    "TGR_Test_Auto_Blob_properties_typeProperties_scope": {
+                        "value": "[parameters('TGR_Test_Auto_Blob_properties_typeProperties_scope')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'adf-cal-dwh_ArmTemplate_3')]"
+            ]
+        },
+        {
+            "name": "adf-cal-dwh_ArmTemplate_5",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-03-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/ArmTemplate_5.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "factoryName": {
+                        "value": "[parameters('factoryName')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'adf-cal-dwh_ArmTemplate_4')]"
+            ]
+        },
+        {
+            "name": "adf-cal-dwh_ArmTemplate_6",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-03-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/ArmTemplate_6.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "factoryName": {
+                        "value": "[parameters('factoryName')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'adf-cal-dwh_ArmTemplate_5')]"
+            ]
+        },
+        {
+            "name": "adf-cal-dwh_ArmTemplate_7",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-03-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/ArmTemplate_7.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "factoryName": {
+                        "value": "[parameters('factoryName')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'adf-cal-dwh_ArmTemplate_6')]"
+            ]
+        },
+        {
+            "name": "adf-cal-dwh_ArmTemplate_8",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-03-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/ArmTemplate_8.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "factoryName": {
+                        "value": "[parameters('factoryName')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'adf-cal-dwh_ArmTemplate_7')]"
+            ]
+        }
+    ]
+}

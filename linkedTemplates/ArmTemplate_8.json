@@ -1,0 +1,1428 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "adf-cal-dwh"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/TGR_SF_DATA')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Trigger to pull the Salesforce data",
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "PL_LOAD_SF_DATA",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Day",
+                        "interval": 1,
+                        "startTime": "2025-02-17T01:00:00",
+                        "endTime": "2026-12-31T23:59:59",
+                        "timeZone": "Central Standard Time",
+                        "schedule": {
+                            "minutes": [
+                                0
+                            ],
+                            "hours": [
+                                1
+                            ]
+                        }
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TGR_TMO_LOAN_DATA_FULL_LOAD')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Trigger to pull the TMO loan data by timestamp on daily basis",
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "PL_LOAD_LOAN_DETAIL_FULL",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Day",
+                        "interval": 1,
+                        "startTime": "2026-03-20T12:00:00",
+                        "endTime": "2027-01-01T23:59:00",
+                        "timeZone": "India Standard Time",
+                        "schedule": {
+                            "minutes": [
+                                30
+                            ],
+                            "hours": [
+                                12
+                            ]
+                        }
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TGR_SF_DATA_FULL')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Trigger to pull the Salesforce data",
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "PL_LOAD_SF_DATA_FULL",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Day",
+                        "interval": 1,
+                        "startTime": "2026-03-20T12:00:00",
+                        "endTime": "2027-01-02T23:59:00",
+                        "timeZone": "India Standard Time",
+                        "schedule": {
+                            "minutes": [
+                                30
+                            ],
+                            "hours": [
+                                12
+                            ]
+                        }
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_POST_ADD_FUNDINGS_DEV')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "This pipeline will call PL_CHILD_POST_ADD_FUNDINGS_DEV pipeline.",
+                "activities": [
+                    {
+                        "name": "LOOKUP_POST_FUND_ADJUSTMENT",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "SELECT * FROM vw_post_fund_adjustment",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_POST_FUND_ADJUSTMENT",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_POST_FUND_ADJUSTMENT').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_POST_ADD_FUNDING_DEV",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_POST_ADD_FUNDINGS_DEV",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "api_url": {
+                                                "value": "@item().api_url",
+                                                "type": "Expression"
+                                            },
+                                            "token": {
+                                                "value": "@item().token",
+                                                "type": "Expression"
+                                            },
+                                            "dbase_name": {
+                                                "value": "@item().dbase_name",
+                                                "type": "Expression"
+                                            },
+                                            "account_no": {
+                                                "value": "@item().account_no",
+                                                "type": "Expression"
+                                            },
+                                            "api_body": {
+                                                "value": "@item().api_body",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "EXEC_PL_LOAD_FUND_ADJUSTMENT_LENDER_PORTFOLIO",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [
+                            {
+                                "activity": "ForEach1",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "PL_LOAD_FUND_ADJUSTMENT_LENDER_PORTFOLIO_DEV",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_DEV"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-04-28T04:53:44Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_POST_ADD_FUNDINGS')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "This pipeline will call PL_CHILD_POST_ADD_FUNDINGS pipeline.",
+                "activities": [
+                    {
+                        "name": "LOOKUP_POST_FUND_ADJUSTMENT",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "SELECT * FROM vw_post_fund_adjustment",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_POST_FUND_ADJUSTMENT",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('LOOKUP_POST_FUND_ADJUSTMENT').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": true,
+                            "activities": [
+                                {
+                                    "name": "EXEC_PL_CHILD_POST_ADD_FUNDING",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_CHILD_POST_ADD_FUNDINGS",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {
+                                            "api_url": {
+                                                "value": "@item().api_url",
+                                                "type": "Expression"
+                                            },
+                                            "token": {
+                                                "value": "@item().token",
+                                                "type": "Expression"
+                                            },
+                                            "dbase_name": {
+                                                "value": "@item().dbase_name",
+                                                "type": "Expression"
+                                            },
+                                            "account_no": {
+                                                "value": "@item().account_no",
+                                                "type": "Expression"
+                                            },
+                                            "api_body": {
+                                                "value": "@item().api_body",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "EXEC_PL_LOAD_FUND_ADJUSTMENT_LENDER_PORTFOLIO",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [
+                            {
+                                "activity": "ForEach1",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "PL_LOAD_FUND_ADJUSTMENT_LENDER_PORTFOLIO",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_PROD"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-10-29T08:54:00Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TestLoad')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Execute Pipeline1",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "PL_INGEST_TMO_GETLOAN_BY_TS",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "name": "Execute Pipeline2",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [
+                            {
+                                "activity": "Execute Pipeline1",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "TestLenderPortfolio",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "name": "Execute Pipeline3",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [
+                            {
+                                "activity": "Execute Pipeline2",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "TestLoansAIOuter",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL TESTS"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-02-18T08:47:08Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TestLoad_Manual')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Execute Pipeline2",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [
+                            {
+                                "activity": "Execute Pipeline1",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "PL_INGEST_TMO_GETLOAN_BY_TS",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "name": "Execute Pipeline3",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [
+                            {
+                                "activity": "Execute Pipeline2",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "TestLenderPortfolio",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "name": "Execute Pipeline4",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [
+                            {
+                                "activity": "Execute Pipeline3",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "TestLoansAIOuter",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "name": "Execute Pipeline1",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "TestSalesforce",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL TESTS"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-02-18T08:47:08Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_ADD_FUNDINGS_DEV')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "This pipeline checks for the file in blob storage and loads into staging table and then after to the main table.",
+                "activities": [
+                    {
+                        "name": "LOOKUP_DL_AZUREDB_DATA_LOAD",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "SELECT * FROM dbo.dl_azuredb_data_load",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": true
+                        }
+                    },
+                    {
+                        "name": "CHECK_IF_FILE_EXISTS",
+                        "type": "GetMetadata",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_DL_AZUREDB_DATA_LOAD",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataset": {
+                                "referenceName": "DS_ADDFUNDING",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "src_continer_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_container_name",
+                                        "type": "Expression"
+                                    },
+                                    "src_file_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_dl_file_name",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "fieldList": [
+                                "exists"
+                            ],
+                            "storeSettings": {
+                                "type": "AzureBlobStorageReadSettings",
+                                "recursive": true,
+                                "enablePartitionDiscovery": false
+                            }
+                        }
+                    },
+                    {
+                        "name": "If Condition1",
+                        "type": "IfCondition",
+                        "dependsOn": [
+                            {
+                                "activity": "CHECK_IF_FILE_EXISTS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "expression": {
+                                "value": "@activity('CHECK_IF_FILE_EXISTS').output.exists",
+                                "type": "Expression"
+                            },
+                            "ifTrueActivities": [
+                                {
+                                    "name": "COPY_DATA_TO_AZUREDB",
+                                    "type": "Copy",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "source": {
+                                            "type": "ExcelSource",
+                                            "storeSettings": {
+                                                "type": "AzureBlobStorageReadSettings",
+                                                "recursive": true,
+                                                "enablePartitionDiscovery": false
+                                            }
+                                        },
+                                        "sink": {
+                                            "type": "AzureSqlSink",
+                                            "preCopyScript": {
+                                                "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.staging_pre_load_script",
+                                                "type": "Expression"
+                                            },
+                                            "writeBehavior": "insert",
+                                            "sqlWriterUseTableLock": false,
+                                            "disableMetricsCollection": false
+                                        },
+                                        "enableStaging": false,
+                                        "translator": {
+                                            "type": "TabularTranslator",
+                                            "mappings": [
+                                                {
+                                                    "source": {
+                                                        "name": "AccountNo",
+                                                        "type": "String",
+                                                        "physicalType": "String"
+                                                    },
+                                                    "sink": {
+                                                        "name": "account_no",
+                                                        "type": "String",
+                                                        "physicalType": "varchar"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "name": "LenderCode",
+                                                        "type": "String",
+                                                        "physicalType": "String"
+                                                    },
+                                                    "sink": {
+                                                        "name": "lender_code",
+                                                        "type": "String",
+                                                        "physicalType": "varchar"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "name": "AdjustmentType",
+                                                        "type": "String",
+                                                        "physicalType": "String"
+                                                    },
+                                                    "sink": {
+                                                        "name": "adjustment_type",
+                                                        "type": "String",
+                                                        "physicalType": "varchar"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "name": "FundPercentage",
+                                                        "type": "String",
+                                                        "physicalType": "String"
+                                                    },
+                                                    "sink": {
+                                                        "name": "fund_percentage",
+                                                        "type": "Decimal",
+                                                        "physicalType": "decimal",
+                                                        "scale": 2,
+                                                        "precision": 9
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "name": "FundValue",
+                                                        "type": "String",
+                                                        "physicalType": "String"
+                                                    },
+                                                    "sink": {
+                                                        "name": "fund_value",
+                                                        "type": "Decimal",
+                                                        "physicalType": "decimal",
+                                                        "scale": 2,
+                                                        "precision": 18
+                                                    }
+                                                }
+                                            ],
+                                            "typeConversion": true,
+                                            "typeConversionSettings": {
+                                                "allowDataTruncation": true,
+                                                "treatBooleanAsNumber": false
+                                            }
+                                        }
+                                    },
+                                    "inputs": [
+                                        {
+                                            "referenceName": "DS_ADDFUNDING",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "src_continer_name": {
+                                                    "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_container_name",
+                                                    "type": "Expression"
+                                                },
+                                                "src_file_name": {
+                                                    "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_dl_file_name",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "outputs": [
+                                        {
+                                            "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                            "type": "DatasetReference",
+                                            "parameters": {}
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "SP_LOAD_FUND_ADJUSTMENT_DETAIL",
+                                    "type": "SqlServerStoredProcedure",
+                                    "dependsOn": [
+                                        {
+                                            "activity": "COPY_DATA_TO_AZUREDB",
+                                            "dependencyConditions": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    ],
+                                    "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 3,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "storedProcedureName": "dbo.pr_validate_fund_adjustment",
+                                        "storedProcedureParameters": {
+                                            "RequestedBy": {
+                                                "value": {
+                                                    "value": "@pipeline().Pipeline",
+                                                    "type": "Expression"
+                                                },
+                                                "type": "String"
+                                            }
+                                        }
+                                    },
+                                    "linkedServiceName": {
+                                        "referenceName": "LS_AzureSql_CAL_DEV",
+                                        "type": "LinkedServiceReference"
+                                    }
+                                },
+                                {
+                                    "name": "EXEC_PL_POST_ADD_FUNDINGS",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [
+                                        {
+                                            "activity": "SP_LOAD_FUND_ADJUSTMENT_DETAIL",
+                                            "dependencyConditions": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    ],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_POST_ADD_FUNDINGS_DEV",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {}
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "MOVE_FILE",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "If Condition1",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "ExcelSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                }
+                            },
+                            "sink": {
+                                "type": "DelimitedTextSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextWriteSettings",
+                                    "quoteAllText": true,
+                                    "fileExtension": ".xlsx"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "DS_ADDFUNDING",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "src_continer_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_container_name",
+                                        "type": "Expression"
+                                    },
+                                    "src_file_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_dl_file_name",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "DS_ADDFUNDING_MOVE_FILE",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "target_continer_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.target_container_name",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "DELETE_SOURCE_FILE",
+                        "type": "Delete",
+                        "dependsOn": [
+                            {
+                                "activity": "MOVE_FILE",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataset": {
+                                "referenceName": "DS_ADDFUNDING",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "src_continer_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_container_name",
+                                        "type": "Expression"
+                                    },
+                                    "src_file_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_dl_file_name",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "enableLogging": false,
+                            "storeSettings": {
+                                "type": "AzureBlobStorageReadSettings",
+                                "recursive": true,
+                                "enablePartitionDiscovery": false
+                            }
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_DEV"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-04-25T11:52:07Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/PL_POST_ADD_FUNDINGS_DEV')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_LOAD_ADD_FUNDINGS')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "This pipeline checks for the file in blob storage and loads into staging table and then after to the main table.",
+                "activities": [
+                    {
+                        "name": "LOOKUP_DL_AZUREDB_DATA_LOAD",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "sqlReaderQuery": "SELECT * FROM dbo.dl_azuredb_data_load",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "DS_AZURE_SQL_CAL",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": true
+                        }
+                    },
+                    {
+                        "name": "CHECK_IF_FILE_EXISTS",
+                        "type": "GetMetadata",
+                        "dependsOn": [
+                            {
+                                "activity": "LOOKUP_DL_AZUREDB_DATA_LOAD",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataset": {
+                                "referenceName": "DS_ADDFUNDING",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "src_continer_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_container_name",
+                                        "type": "Expression"
+                                    },
+                                    "src_file_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_dl_file_name",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "fieldList": [
+                                "exists"
+                            ],
+                            "storeSettings": {
+                                "type": "AzureBlobStorageReadSettings",
+                                "recursive": true,
+                                "enablePartitionDiscovery": false
+                            }
+                        }
+                    },
+                    {
+                        "name": "If Condition1",
+                        "type": "IfCondition",
+                        "dependsOn": [
+                            {
+                                "activity": "CHECK_IF_FILE_EXISTS",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "expression": {
+                                "value": "@activity('CHECK_IF_FILE_EXISTS').output.exists",
+                                "type": "Expression"
+                            },
+                            "ifTrueActivities": [
+                                {
+                                    "name": "COPY_DATA_TO_AZUREDB",
+                                    "type": "Copy",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "source": {
+                                            "type": "ExcelSource",
+                                            "storeSettings": {
+                                                "type": "AzureBlobStorageReadSettings",
+                                                "recursive": true,
+                                                "enablePartitionDiscovery": false
+                                            }
+                                        },
+                                        "sink": {
+                                            "type": "AzureSqlSink",
+                                            "preCopyScript": {
+                                                "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.staging_pre_load_script",
+                                                "type": "Expression"
+                                            },
+                                            "writeBehavior": "insert",
+                                            "sqlWriterUseTableLock": false,
+                                            "disableMetricsCollection": false
+                                        },
+                                        "enableStaging": false,
+                                        "translator": {
+                                            "type": "TabularTranslator",
+                                            "mappings": [
+                                                {
+                                                    "source": {
+                                                        "name": "AccountNo",
+                                                        "type": "String",
+                                                        "physicalType": "String"
+                                                    },
+                                                    "sink": {
+                                                        "name": "account_no",
+                                                        "type": "String",
+                                                        "physicalType": "varchar"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "name": "LenderCode",
+                                                        "type": "String",
+                                                        "physicalType": "String"
+                                                    },
+                                                    "sink": {
+                                                        "name": "lender_code",
+                                                        "type": "String",
+                                                        "physicalType": "varchar"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "name": "AdjustmentType",
+                                                        "type": "String",
+                                                        "physicalType": "String"
+                                                    },
+                                                    "sink": {
+                                                        "name": "adjustment_type",
+                                                        "type": "String",
+                                                        "physicalType": "varchar"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "name": "FundPercentage",
+                                                        "type": "String",
+                                                        "physicalType": "String"
+                                                    },
+                                                    "sink": {
+                                                        "name": "fund_percentage",
+                                                        "type": "Decimal",
+                                                        "physicalType": "decimal",
+                                                        "scale": 2,
+                                                        "precision": 9
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "name": "FundValue",
+                                                        "type": "String",
+                                                        "physicalType": "String"
+                                                    },
+                                                    "sink": {
+                                                        "name": "fund_value",
+                                                        "type": "Decimal",
+                                                        "physicalType": "decimal",
+                                                        "scale": 2,
+                                                        "precision": 18
+                                                    }
+                                                }
+                                            ],
+                                            "typeConversion": true,
+                                            "typeConversionSettings": {
+                                                "allowDataTruncation": true,
+                                                "treatBooleanAsNumber": false
+                                            }
+                                        }
+                                    },
+                                    "inputs": [
+                                        {
+                                            "referenceName": "DS_ADDFUNDING",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "src_continer_name": {
+                                                    "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_container_name",
+                                                    "type": "Expression"
+                                                },
+                                                "src_file_name": {
+                                                    "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_dl_file_name",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "outputs": [
+                                        {
+                                            "referenceName": "DS_AZURE_SQL_CAL",
+                                            "type": "DatasetReference",
+                                            "parameters": {}
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "SP_LOAD_FUND_ADJUSTMENT_DETAIL",
+                                    "type": "SqlServerStoredProcedure",
+                                    "dependsOn": [
+                                        {
+                                            "activity": "COPY_DATA_TO_AZUREDB",
+                                            "dependencyConditions": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    ],
+                                    "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 3,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "storedProcedureName": "dbo.pr_validate_fund_adjustment",
+                                        "storedProcedureParameters": {
+                                            "RequestedBy": {
+                                                "value": {
+                                                    "value": "@pipeline().Pipeline",
+                                                    "type": "Expression"
+                                                },
+                                                "type": "String"
+                                            }
+                                        }
+                                    },
+                                    "linkedServiceName": {
+                                        "referenceName": "LS_AzureSql_CAL",
+                                        "type": "LinkedServiceReference"
+                                    }
+                                },
+                                {
+                                    "name": "EXEC_PL_POST_ADD_FUNDINGS",
+                                    "type": "ExecutePipeline",
+                                    "dependsOn": [
+                                        {
+                                            "activity": "SP_LOAD_FUND_ADJUSTMENT_DETAIL",
+                                            "dependencyConditions": [
+                                                "Succeeded"
+                                            ]
+                                        }
+                                    ],
+                                    "policy": {
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "pipeline": {
+                                            "referenceName": "PL_POST_ADD_FUNDINGS",
+                                            "type": "PipelineReference"
+                                        },
+                                        "waitOnCompletion": true,
+                                        "parameters": {}
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "MOVE_FILE",
+                        "type": "Copy",
+                        "dependsOn": [
+                            {
+                                "activity": "If Condition1",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "ExcelSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                }
+                            },
+                            "sink": {
+                                "type": "DelimitedTextSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "DelimitedTextWriteSettings",
+                                    "quoteAllText": true,
+                                    "fileExtension": ".xlsx"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "DS_ADDFUNDING",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "src_continer_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_container_name",
+                                        "type": "Expression"
+                                    },
+                                    "src_file_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_dl_file_name",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "DS_ADDFUNDING_MOVE_FILE",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "target_continer_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.target_container_name",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "DELETE_SOURCE_FILE",
+                        "type": "Delete",
+                        "dependsOn": [
+                            {
+                                "activity": "MOVE_FILE",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataset": {
+                                "referenceName": "DS_ADDFUNDING",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "src_continer_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_container_name",
+                                        "type": "Expression"
+                                    },
+                                    "src_file_name": {
+                                        "value": "@activity('LOOKUP_DL_AZUREDB_DATA_LOAD').output.firstRow.source_dl_file_name",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "enableLogging": false,
+                            "storeSettings": {
+                                "type": "AzureBlobStorageReadSettings",
+                                "recursive": true,
+                                "enablePartitionDiscovery": false
+                            }
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_PROD"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-10-29T08:54:01Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/PL_POST_ADD_FUNDINGS')]"
+            ]
+        }
+    ]
+}

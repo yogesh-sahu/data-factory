@@ -1,0 +1,255 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "value": "adf-cal-dwh"
+        },
+        "LS_AzureSql_CAL_password": {
+            "value": ""
+        },
+        "Salesforce1_clientSecret": {
+            "value": ""
+        },
+        "Salesforce2_clientSecret": {
+            "value": ""
+        },
+        "Salesforce3_clientSecret": {
+            "value": ""
+        },
+        "Oppono_Salesforce_clientSecret": {
+            "value": ""
+        },
+        "LS_SALESFORCEF_DEV_clientSecret": {
+            "value": ""
+        },
+        "RestService1_clientSecret": {
+            "value": ""
+        },
+        "Loan_history_abhi_test_password": {
+            "value": ""
+        },
+        "LS_ADDFUNDING_connectionString": {
+            "value": ""
+        },
+        "LS_AzureSql_CAL_DEV_password": {
+            "value": ""
+        },
+        "LS_Test_Auto_Blob_connectionString": {
+            "value": ""
+        },
+        "LS_Test_Auto_Blob_Trgt_password": {
+            "value": ""
+        },
+        "LS_GetLoan_Trgt_password": {
+            "value": ""
+        },
+        "LS_Prod_password": {
+            "value": ""
+        },
+        "LS_Dev_password": {
+            "value": ""
+        },
+        "AzureSqlDatabase1_password": {
+            "value": ""
+        },
+        "LS_Salesforce_Preprod_Appraisal_clientSecret": {
+            "value": ""
+        },
+        "AzureBlobStorage1_connectionString": {
+            "value": ""
+        },
+        "AzureDataLakeStorage1_accountKey": {
+            "value": ""
+        },
+        "LS_BLOB_totalw1_DEV_connectionString": {
+            "value": ""
+        },
+        "AzureSqlDatabase_dev_test_stg_password": {
+            "value": ""
+        },
+        "LS_AzureSql_CAL_FULL_password": {
+            "value": ""
+        },
+        "Oppono_Salesforce_full_clientSecret": {
+            "value": ""
+        },
+        "LS_ADDFUNDING_FULL_connectionString": {
+            "value": ""
+        },
+        "AzureBlobStorage_DEV_connectionString": {
+            "value": ""
+        },
+        "TGR_Test_Auto_Blob_properties_typeProperties_scope": {
+            "value": "/subscriptions/f5f79f17-b917-4237-9802-4d18b66abdb4/resourceGroups/CAL-DWH-RG/providers/Microsoft.Storage/storageAccounts/totalw1"
+        },
+        "LS_AzureSql_CAL_properties_typeProperties_server": {
+            "value": "cal-dwh.database.windows.net"
+        },
+        "LS_AzureSql_CAL_properties_typeProperties_database": {
+            "value": "cal_bi_analytics"
+        },
+        "LS_AzureSql_CAL_properties_typeProperties_userName": {
+            "value": "caldwhsqladmin"
+        },
+        "Salesforce1_properties_typeProperties_environmentUrl": {
+            "value": "https://opponolending.my.salesforce.com"
+        },
+        "Salesforce1_properties_typeProperties_clientId": {
+            "value": "3MVG9KsVczVNcM8xl2dzvHG7HgrcyTQXPg78vY7IvA0CC5NtqvDyfoT7LYZfpje7d5MqE9a7rkzvJXtMIzKcP"
+        },
+        "Salesforce2_properties_typeProperties_environmentUrl": {
+            "value": "https://opponolending.my.salesforce.com"
+        },
+        "Salesforce2_properties_typeProperties_clientId": {
+            "value": "3MVG9KsVczVNcM8xl2dzvHG7HgtRWpRNj5sK0WG02H0iDQZ0_LkBELceVNcbaAI7k7ZBqb2UROOZeVLrm6SPO"
+        },
+        "Salesforce3_properties_typeProperties_environmentUrl": {
+            "value": "https://page-connect-833.my.salesforce.com/"
+        },
+        "Salesforce3_properties_typeProperties_clientId": {
+            "value": "3MVG9Kr5_mB04D166d8ZpJmBFCslBqS2.Ui5ETNPffWF0UhfcoWMfI5MYY6z6iGAdt3YkpWjK1KuZZFMirGpA"
+        },
+        "Oppono_Salesforce_properties_typeProperties_environmentUrl": {
+            "value": "https://opponolending.my.salesforce.com"
+        },
+        "Oppono_Salesforce_properties_typeProperties_clientId": {
+            "value": "3MVG9KsVczVNcM8xl2dzvHG7HgnRXIjfRYYHs3KdEx3PXe7MSvqthL66X_qN47ydNFx9242PUP14YcI52lOin"
+        },
+        "LS_SALESFORCEF_DEV_properties_typeProperties_environmentUrl": {
+            "value": "https://proclink-dev-ed.develop.my.salesforce.com/"
+        },
+        "LS_SALESFORCEF_DEV_properties_typeProperties_clientId": {
+            "value": "3MVG9WVXk15qiz1Jbb64Q7pMPL.pGzfOnIAF4UkjGSYDAs7BsgexoMd1.HEr1ost9eCW2J0Q1Kwq61mNZrFdv"
+        },
+        "RestService1_properties_typeProperties_url": {
+            "value": "https://opponolending.my.salesforce.com/services/data/v54.0/"
+        },
+        "RestService1_properties_typeProperties_clientId": {
+            "value": "3MVG9KsVczVNcM8xl2dzvHG7HgnRXIjfRYYHs3KdEx3PXe7MSvqthL66X_qN47ydNFx9242PUP14YcI52lOin"
+        },
+        "Loan_history_abhi_test_properties_typeProperties_server": {
+            "value": "cal-dwh.database.windows.net"
+        },
+        "Loan_history_abhi_test_properties_typeProperties_database": {
+            "value": "cal_bi_analytics_dev"
+        },
+        "Loan_history_abhi_test_properties_typeProperties_userName": {
+            "value": "caldwhsqladmin"
+        },
+        "ls_Abhi_loanhistory_properties_typeProperties_url": {
+            "value": "https://api-ca.themortgageoffice.com/LSS.svc/GetLoanHistory/"
+        },
+        "Is_abhi_loanhistory_v2_properties_typeProperties_url": {
+            "value": "https://api-ca.themortgageoffice.com/LSS.svc/"
+        },
+        "LS_AzureSql_CAL_DEV_properties_typeProperties_server": {
+            "value": "cal-dwh.database.windows.net"
+        },
+        "LS_AzureSql_CAL_DEV_properties_typeProperties_database": {
+            "value": "cal_bi_analytics_dev"
+        },
+        "LS_AzureSql_CAL_DEV_properties_typeProperties_userName": {
+            "value": "caldwhsqladmin"
+        },
+        "LS_Test_Auto_Blob_Trgt_properties_typeProperties_server": {
+            "value": "cal-dwh.database.windows.net"
+        },
+        "LS_Test_Auto_Blob_Trgt_properties_typeProperties_database": {
+            "value": "cal_bi_analytics"
+        },
+        "LS_Test_Auto_Blob_Trgt_properties_typeProperties_userName": {
+            "value": "caldwhsqladmin"
+        },
+        "LS_GetLoan_Trgt_properties_typeProperties_server": {
+            "value": "cal-dwh.database.windows.net"
+        },
+        "LS_GetLoan_Trgt_properties_typeProperties_database": {
+            "value": "cal_bi_analytics"
+        },
+        "LS_GetLoan_Trgt_properties_typeProperties_userName": {
+            "value": "caldwhsqladmin"
+        },
+        "LS_RestService_SRC_properties_typeProperties_url": {
+            "value": "https://api-ca.themortgageoffice.com/LSS.svc/GetLoan/114548"
+        },
+        "LS_Prod_properties_typeProperties_server": {
+            "value": "cal-dwh.database.windows.net"
+        },
+        "LS_Prod_properties_typeProperties_database": {
+            "value": "cal_bi_analytics"
+        },
+        "LS_Prod_properties_typeProperties_userName": {
+            "value": "caldwhsqladmin"
+        },
+        "LS_Dev_properties_typeProperties_server": {
+            "value": "cal-dwh.database.windows.net"
+        },
+        "LS_Dev_properties_typeProperties_database": {
+            "value": "cal_bi_analytics_dev"
+        },
+        "LS_Dev_properties_typeProperties_userName": {
+            "value": "caldwhsqladmin"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_server": {
+            "value": "cal-dwh.database.windows.net"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_database": {
+            "value": "cal_bi_analytics"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_userName": {
+            "value": "caldwhsqladmin"
+        },
+        "LS_Salesforce_Preprod_Appraisal_properties_typeProperties_environmentUrl": {
+            "value": "https://opponolending--preprod.sandbox.my.salesforce.com"
+        },
+        "LS_Salesforce_Preprod_Appraisal_properties_typeProperties_clientId": {
+            "value": "3MVG96qSbA1.IAaxms94iGsL57wY8GcDFNCEH0UTCx8MeC73K01X1ku17N.Y4lsiWAs5dk_G8yprsOosGo6WM"
+        },
+        "LS_LENDER_PORTFOLIO_properties_typeProperties_url": {
+            "value": "https://api-ca.themortgageoffice.com/LSS.svc/GetLenderPortfolio"
+        },
+        "LS_LOAN_BY_TS_properties_typeProperties_url": {
+            "value": "https://api-ca.themortgageoffice.com/"
+        },
+        "TMOLenderPortfolio_properties_typeProperties_url": {
+            "value": "https://api-ca.themortgageoffice.com/LSS.svc"
+        },
+        "AzureDataLakeStorage1_properties_typeProperties_url": {
+            "value": "https://totalw1.dfs.core.windows.net/"
+        },
+        "AzureSqlDatabase_dev_test_stg_properties_typeProperties_server": {
+            "value": "cal-dwh.database.windows.net"
+        },
+        "AzureSqlDatabase_dev_test_stg_properties_typeProperties_database": {
+            "value": "cal_bi_analytics_dev"
+        },
+        "AzureSqlDatabase_dev_test_stg_properties_typeProperties_userName": {
+            "value": "caldwhsqladmin"
+        },
+        "LS_AzureSql_CAL_FULL_properties_typeProperties_server": {
+            "value": "cal-dwh.database.windows.net"
+        },
+        "LS_AzureSql_CAL_FULL_properties_typeProperties_database": {
+            "value": "cal_bi_analytics"
+        },
+        "LS_AzureSql_CAL_FULL_properties_typeProperties_userName": {
+            "value": "caldwhsqladmin"
+        },
+        "Oppono_Salesforce_full_properties_typeProperties_environmentUrl": {
+            "value": "https://opponolending.my.salesforce.com"
+        },
+        "Oppono_Salesforce_full_properties_typeProperties_clientId": {
+            "value": "3MVG9KsVczVNcM8xl2dzvHG7HgnRXIjfRYYHs3KdEx3PXe7MSvqthL66X_qN47ydNFx9242PUP14YcI52lOin"
+        },
+        "TMOLenderPortfolio_full_properties_typeProperties_url": {
+            "value": "https://api-ca.themortgageoffice.com/LSS.svc"
+        },
+        "containerUri": {
+            "value": ""
+        },
+        "containerSasToken": {
+            "value": ""
+        }
+    }
+}

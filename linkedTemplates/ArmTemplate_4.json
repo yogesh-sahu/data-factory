@@ -1,0 +1,1944 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "adf-cal-dwh"
+        },
+        "TGR_Test_Auto_Blob_properties_typeProperties_scope": {
+            "type": "string",
+            "defaultValue": "/subscriptions/f5f79f17-b917-4237-9802-4d18b66abdb4/resourceGroups/CAL-DWH-RG/providers/Microsoft.Storage/storageAccounts/totalw1"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/TGR_Test_Auto_Blob')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "runtimeState": "Stopped",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "pipeline1",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "BlobEventsTrigger",
+                "typeProperties": {
+                    "blobPathBeginsWith": "/addfunding/blobs/",
+                    "ignoreEmptyBlobs": true,
+                    "scope": "[parameters('TGR_Test_Auto_Blob_properties_typeProperties_scope')]",
+                    "events": [
+                        "Microsoft.Storage.BlobCreated"
+                    ]
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TRG_SyncToSalesforce_15Min')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipeline": {
+                    "pipelineReference": {
+                        "referenceName": "PL_Test_SQL_to_Salesforce",
+                        "type": "PipelineReference"
+                    },
+                    "parameters": {}
+                },
+                "type": "TumblingWindowTrigger",
+                "typeProperties": {
+                    "frequency": "Minute",
+                    "interval": 15,
+                    "startTime": "2026-01-09T11:15:00Z",
+                    "delay": "00:00:00",
+                    "maxConcurrency": 1,
+                    "retryPolicy": {
+                        "count": 3,
+                        "intervalInSeconds": 30
+                    },
+                    "dependsOn": []
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TRG_AppraisalData_15Min')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipeline": {
+                    "pipelineReference": {
+                        "referenceName": "PL_AppraisalData_to_Salesforce",
+                        "type": "PipelineReference"
+                    },
+                    "parameters": {}
+                },
+                "type": "TumblingWindowTrigger",
+                "typeProperties": {
+                    "frequency": "Minute",
+                    "interval": 15,
+                    "startTime": "2026-01-12T18:02:00Z",
+                    "delay": "00:00:00",
+                    "maxConcurrency": 1,
+                    "retryPolicy": {
+                        "intervalInSeconds": 30
+                    },
+                    "dependsOn": []
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_AZURE_SQL_CAL')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "stg_fund_adjustment"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_AZURE_SQL_CAL_DYN')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "stg_obj_name": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": {
+                        "value": "@dataset().stg_obj_name",
+                        "type": "Expression"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_AZURE_SQL_CAL_DEV')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_DEV",
+                    "type": "LinkedServiceReference"
+                },
+                "folder": {
+                    "name": "DS_DEV"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "stg_fund_adjustment"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_AZURE_SQL_CAL_DEV_DYN')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_DEV",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "stg_obj_name": {
+                        "type": "string"
+                    }
+                },
+                "folder": {
+                    "name": "DS_DEV"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": {
+                        "value": "@dataset().stg_obj_name",
+                        "type": "Expression"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_RAW_RESPONSE_LOAN_BY_TS')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_DEV",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "api_url",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "api_response",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "file_name",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "is_processed",
+                        "type": "tinyint",
+                        "precision": 3
+                    },
+                    {
+                        "name": "is_error",
+                        "type": "tinyint",
+                        "precision": 3
+                    },
+                    {
+                        "name": "created_by",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "created_on",
+                        "type": "datetime2",
+                        "scale": 7
+                    },
+                    {
+                        "name": "updated_by",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "updated_on",
+                        "type": "datetime2",
+                        "scale": 7
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "api_response_full"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_sf_stg_table')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_DEV",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "Id",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Name",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "loan_rk",
+                        "type": "bigint",
+                        "precision": 19
+                    },
+                    {
+                        "name": "borrower_name",
+                        "type": "varchar"
+                    },
+                    {
+                        "name": "account_no_origination",
+                        "type": "varchar"
+                    },
+                    {
+                        "name": "approved_mortgage_formula",
+                        "type": "decimal",
+                        "precision": 38,
+                        "scale": 18
+                    },
+                    {
+                        "name": "purchase_date",
+                        "type": "date"
+                    },
+                    {
+                        "name": "TMO_Account_Number_from_Origination__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Approved_Mortgage__c",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 2
+                    },
+                    {
+                        "name": "CreatedDate",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "LastModifiedDate",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "Created_Date__c",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "CloseDate",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "Funding_Date__c",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "Funded_Date__c",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "Interest_Adjustment_Date__c",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "First_Payment_Date__c",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "Maturity_Date__c",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "New_Maturity_Date_on_Renewal__c",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "Repayment_Type__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Term_In_Months__c",
+                        "type": "decimal",
+                        "precision": 3,
+                        "scale": 0
+                    },
+                    {
+                        "name": "Amortization_Period__c",
+                        "type": "decimal",
+                        "precision": 3,
+                        "scale": 0
+                    },
+                    {
+                        "name": "Annual_Percentage_Rate__c",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 4
+                    },
+                    {
+                        "name": "Chosen_Rate_Type__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Note_Rate__c",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 2
+                    },
+                    {
+                        "name": "Requested_Term_Type__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Monthly_Payment__c",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 2
+                    },
+                    {
+                        "name": "Payment_Frequency__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Primary_Credit_Score__c",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 0
+                    },
+                    {
+                        "name": "Credit_Report_Date_del__c",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "Approved_LTV__c",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 2
+                    },
+                    {
+                        "name": "Appraised_Value__c",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 2
+                    },
+                    {
+                        "name": "Appraisal_Date__c",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "Dwelling_Type__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Tenure__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Occupancy_Type__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Type",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Loan_Position__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Province__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Property_City__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Property_Zip_Code__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Updated_Mortgage_Status__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Possession_Type__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "BoC_Overnight_Rate__c",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 3
+                    },
+                    {
+                        "name": "StageName",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Appraisal_Value_at_Renewal__c",
+                        "type": "decimal",
+                        "precision": 18,
+                        "scale": 2
+                    },
+                    {
+                        "name": "Renewal_Appraisal_Date__c",
+                        "type": "datetime2",
+                        "scale": 0
+                    },
+                    {
+                        "name": "Lender__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "TMO_Account_Number_New__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Amortization__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Renew_Amortization_Total_Interest_Pay__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Remaining_Amortization__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Negative_Amortization_Formula__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Number_of_Compounded_Periods__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Number_of_Payments__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Loan_Type__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Purpose__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Renewed_Date__c",
+                        "type": "datetime2",
+                        "scale": 7
+                    },
+                    {
+                        "name": "Existing_Mortgage_Holder__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Existing_Mortgage_Holder_2__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Existing_Mortgage_Holder_3__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Pre_Paid_Holdback_Monthly_Calc__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Holdback_Spread__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Pre_Paid_Holdback__c",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "created_by",
+                        "type": "varchar"
+                    },
+                    {
+                        "name": "mdm_checksum",
+                        "type": "varchar"
+                    },
+                    {
+                        "name": "batch_id",
+                        "type": "varchar"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "stg_sf_opportunity_full"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_AZURE_SQL_CAL_FULL')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_FULL",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "stg_fund_adjustment"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/DS_AZURE_SQL_CAL_DYN_FULL')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_FULL",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "stg_obj_name": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": {
+                        "value": "@dataset().stg_obj_name",
+                        "type": "Expression"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_CHILD_TMO_API_FULL_LOAD_DEV')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "GET_API_RESPONSE",
+                        "type": "WebActivity",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "method": "GET",
+                            "headers": {
+                                "Token": {
+                                    "value": "@pipeline().parameters.token",
+                                    "type": "Expression"
+                                },
+                                "Database": {
+                                    "value": "@pipeline().parameters.dbase_name",
+                                    "type": "Expression"
+                                }
+                            },
+                            "httpRequestTimeout": "00:10:00",
+                            "url": {
+                                "value": "@pipeline().parameters.api_url",
+                                "type": "Expression"
+                            },
+                            "connectVia": {
+                                "referenceName": "CAL-AutoResolveintegrationRuntime",
+                                "type": "IntegrationRuntimeReference"
+                            }
+                        }
+                    },
+                    {
+                        "name": "SP_CALL_CURATE_API_DATA_SUCCESS",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "GET_API_RESPONSE",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "dbo.pr_curate_api_data",
+                            "storedProcedureParameters": {
+                                "ApiRk": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_rk",
+                                        "type": "Expression"
+                                    },
+                                    "type": "Int32"
+                                },
+                                "APIRequest": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_url",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "APIResponse": {
+                                    "value": {
+                                        "value": "@string(activity('GET_API_RESPONSE').output)",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "IsError": {
+                                    "value": "0",
+                                    "type": "Int16"
+                                },
+                                "RequestedBy": {
+                                    "value": {
+                                        "value": "@pipeline().TriggeredByPipelineName",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "Mode": {
+                                    "value": "A",
+                                    "type": "String"
+                                },
+                                "APIKeyValue": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_key_value",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "APIBatchId": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.batch_id",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                }
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "LS_AzureSql_CAL_DEV",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "SP_CALL_CURATE_API_DATA_FAIL",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "GET_API_RESPONSE",
+                                "dependencyConditions": [
+                                    "Failed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "dbo.pr_curate_api_data",
+                            "storedProcedureParameters": {
+                                "ApiRk": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_rk",
+                                        "type": "Expression"
+                                    },
+                                    "type": "Int32"
+                                },
+                                "APIRequest": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_url",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "APIResponse": {
+                                    "value": {
+                                        "value": "@activity('GET_API_RESPONSE').output",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "IsError": {
+                                    "value": "1",
+                                    "type": "Int16"
+                                },
+                                "RequestedBy": {
+                                    "value": {
+                                        "value": "@pipeline().TriggeredByPipelineName",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "Mode": {
+                                    "value": "A",
+                                    "type": "String"
+                                },
+                                "APIKeyValue": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_key_value",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "APIBatchId": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.batch_id",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                }
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "LS_AzureSql_CAL_DEV",
+                            "type": "LinkedServiceReference"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "api_rk": {
+                        "type": "int"
+                    },
+                    "api_url": {
+                        "type": "string"
+                    },
+                    "token": {
+                        "type": "string"
+                    },
+                    "dbase_name": {
+                        "type": "string"
+                    },
+                    "api_key_value": {
+                        "type": "string"
+                    },
+                    "last_run_successfully": {
+                        "type": "string"
+                    },
+                    "api_override_parameter_value": {
+                        "type": "string"
+                    },
+                    "batch_id": {
+                        "type": "string"
+                    }
+                },
+                "folder": {
+                    "name": "CAL_DEV"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-04-16T10:00:09Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_CHILD_REFRESH_FCT_DATA_DEV')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Pipeline to refresh the fact tables data",
+                "activities": [
+                    {
+                        "name": "SP_REFRESH_FACT_DATA",
+                        "description": "Call pr_curate_fct_data sp to refresh the fact data",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "pr_curate_fct_data",
+                            "storedProcedureParameters": {
+                                "ApiCode": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_code",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "RequestedBy": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.requested_by",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                }
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "LS_AzureSql_CAL_DEV",
+                            "type": "LinkedServiceReference"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "api_code": {
+                        "type": "string"
+                    },
+                    "requested_by": {
+                        "type": "string"
+                    }
+                },
+                "folder": {
+                    "name": "CAL_DEV"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-04-16T09:53:27Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_CHILD_REFRESH_FCT_DATA')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Pipeline to refresh the fact tables data",
+                "activities": [
+                    {
+                        "name": "SP_REFRESH_FACT_DATA",
+                        "description": "Call pr_curate_fct_data sp to refresh the fact data",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "pr_curate_fct_data",
+                            "storedProcedureParameters": {
+                                "ApiCode": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_code",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "RequestedBy": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.requested_by",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                }
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "LS_AzureSql_CAL",
+                            "type": "LinkedServiceReference"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "api_code": {
+                        "type": "string"
+                    },
+                    "requested_by": {
+                        "type": "string"
+                    }
+                },
+                "folder": {
+                    "name": "CAL_PROD"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-04-15T10:19:26Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_CHILD_TMO_API_FULL_LOAD')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "SP_CALL_CURATE_API_DATA_SUCCESS",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "GET_LENDER_PORTFFOLIO",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "dbo.pr_curate_api_data_LP",
+                            "storedProcedureParameters": {
+                                "ApiRk": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_rk",
+                                        "type": "Expression"
+                                    },
+                                    "type": "Int32"
+                                },
+                                "APIRequest": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_url",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "APIResponse": {
+                                    "value": {
+                                        "value": "@concat(pipeline().parameters.Directory, '/', formatDateTime(utcNow(), 'yyyyMMdd'), '/',pipeline().parameters.api_key_value,'.json')",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "IsError": {
+                                    "value": "0",
+                                    "type": "Int16"
+                                },
+                                "RequestedBy": {
+                                    "value": {
+                                        "value": "@pipeline().TriggeredByPipelineName",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "Mode": {
+                                    "value": "A",
+                                    "type": "String"
+                                },
+                                "APIKeyValue": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_key_value",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "APIBatchId": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.batch_id",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                }
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "LS_AzureSql_CAL",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "SP_CALL_CURATE_API_DATA_FAIL",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "GET_LENDER_PORTFFOLIO",
+                                "dependencyConditions": [
+                                    "Failed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "dbo.pr_curate_api_data_LP",
+                            "storedProcedureParameters": {
+                                "ApiRk": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_rk",
+                                        "type": "Expression"
+                                    },
+                                    "type": "Int32"
+                                },
+                                "APIRequest": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_url",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "APIResponse": {
+                                    "value": {
+                                        "value": "@concat(pipeline().parameters.Directory, '/', formatDateTime(utcNow(), 'yyyyMMdd'), '/',pipeline().parameters.api_key_value,'.json')",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "IsError": {
+                                    "value": "1",
+                                    "type": "Int16"
+                                },
+                                "RequestedBy": {
+                                    "value": {
+                                        "value": "@pipeline().TriggeredByPipelineName",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "Mode": {
+                                    "value": "A",
+                                    "type": "String"
+                                },
+                                "APIKeyValue": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_key_value",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "APIBatchId": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.batch_id",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                }
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "LS_AzureSql_CAL",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "GET_LENDER_PORTFFOLIO",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "RestSource",
+                                "httpRequestTimeout": "00:01:40",
+                                "requestInterval": "00.00:00:00.010",
+                                "requestMethod": "GET",
+                                "additionalHeaders": {
+                                    "Token": {
+                                        "value": "@pipeline().parameters.token",
+                                        "type": "Expression"
+                                    },
+                                    "Database": {
+                                        "value": "@pipeline().parameters.dbase_name",
+                                        "type": "Expression"
+                                    }
+                                },
+                                "paginationRules": {
+                                    "supportRFC5988": "true"
+                                }
+                            },
+                            "sink": {
+                                "type": "JsonSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "JsonWriteSettings"
+                                }
+                            },
+                            "enableStaging": false
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "DS_TMOLenderPortfolio",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "URL": {
+                                        "value": "@pipeline().parameters.api_url",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "DS_JSON_PROD",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "FIleName": {
+                                        "value": "@concat(pipeline().parameters.api_key_value,'.json')",
+                                        "type": "Expression"
+                                    },
+                                    "Directory": {
+                                        "value": "@concat(pipeline().parameters.Directory, '/', formatDateTime(utcNow(), 'yyyyMMdd'))",
+                                        "type": "Expression"
+                                    },
+                                    "Container": {
+                                        "value": "@pipeline().parameters.Container",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "api_rk": {
+                        "type": "int"
+                    },
+                    "api_url": {
+                        "type": "string"
+                    },
+                    "token": {
+                        "type": "string"
+                    },
+                    "dbase_name": {
+                        "type": "string"
+                    },
+                    "api_key_value": {
+                        "type": "string"
+                    },
+                    "last_run_successfully": {
+                        "type": "string"
+                    },
+                    "api_override_parameter_value": {
+                        "type": "string"
+                    },
+                    "batch_id": {
+                        "type": "string"
+                    },
+                    "FileName": {
+                        "type": "string",
+                        "defaultValue": "LenderPortfolio"
+                    },
+                    "Directory": {
+                        "type": "string",
+                        "defaultValue": "LenderPortfolio"
+                    },
+                    "Container": {
+                        "type": "string",
+                        "defaultValue": "daily-data-refresh"
+                    }
+                },
+                "folder": {
+                    "name": "CAL_PROD"
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-02-11T01:07:07Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_CHILD_POST_ADD_FUNDINGS_DEV')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "This pipeline calls the post API add fundings.",
+                "activities": [
+                    {
+                        "name": "CALL_ADD_FUNDINGS_API",
+                        "type": "WebActivity",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "method": "POST",
+                            "headers": {
+                                "Token": {
+                                    "value": "@pipeline().parameters.token",
+                                    "type": "Expression"
+                                },
+                                "Database": {
+                                    "value": "@pipeline().parameters.dbase_name",
+                                    "type": "Expression"
+                                }
+                            },
+                            "url": {
+                                "value": "@pipeline().parameters.api_url",
+                                "type": "Expression"
+                            },
+                            "body": {
+                                "value": "@pipeline().parameters.api_body",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    {
+                        "name": "SCR_UPDATE_FUND_ADJUSTMENT_DETAIL",
+                        "type": "Script",
+                        "dependsOn": [
+                            {
+                                "activity": "SET_VARIABLE_API_RESPONSE",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "linkedServiceName": {
+                            "referenceName": "LS_AzureSql_CAL_DEV",
+                            "type": "LinkedServiceReference"
+                        },
+                        "typeProperties": {
+                            "scripts": [
+                                {
+                                    "parameters": [
+                                        {
+                                            "name": "api_response",
+                                            "type": "String",
+                                            "value": {
+                                                "value": "@variables('varjsonstring')",
+                                                "type": "Expression"
+                                            },
+                                            "direction": "Input"
+                                        },
+                                        {
+                                            "name": "account_no",
+                                            "type": "String",
+                                            "value": {
+                                                "value": "@pipeline().parameters.account_no",
+                                                "type": "Expression"
+                                            },
+                                            "direction": "Input"
+                                        }
+                                    ],
+                                    "type": "Query",
+                                    "text": {
+                                        "value": "UPDATE fund_adjustment_detail SET is_processed = 1,process_status = 'PS',process_status_desc = 'Processed Successfully',api_response = @api_response,adjustment_posted_on= GETDATE() WHERE is_processed = 0 AND account_no = @account_no",
+                                        "type": "Expression"
+                                    }
+                                }
+                            ],
+                            "scriptBlockExecutionTimeout": "02:00:00"
+                        }
+                    },
+                    {
+                        "name": "SET_VARIABLE_API_RESPONSE",
+                        "type": "SetVariable",
+                        "dependsOn": [
+                            {
+                                "activity": "CALL_ADD_FUNDINGS_API",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "variableName": "varjsonstring",
+                            "value": {
+                                "value": "@string(concat('{',\n  '\"Data\":', string(activity('CALL_ADD_FUNDINGS_API').output.Data), ',',\n  '\"ErrorMessage\":', if(equals(activity('CALL_ADD_FUNDINGS_API').output.ErrorMessage, null), 'null', string(activity('CALL_ADD_FUNDINGS_API').output.ErrorMessage)), ',',\n  '\"ErrorNumber\":', string(activity('CALL_ADD_FUNDINGS_API').output.ErrorNumber), ',',\n  '\"Status\":', string(activity('CALL_ADD_FUNDINGS_API').output.Status),\n'}'))",
+                                "type": "Expression"
+                            }
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "api_url": {
+                        "type": "string"
+                    },
+                    "token": {
+                        "type": "string"
+                    },
+                    "dbase_name": {
+                        "type": "string"
+                    },
+                    "account_no": {
+                        "type": "string"
+                    },
+                    "api_body": {
+                        "type": "string"
+                    }
+                },
+                "variables": {
+                    "varjsonstring": {
+                        "type": "String"
+                    }
+                },
+                "folder": {
+                    "name": "CAL_DEV"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-04-25T11:52:06Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_HOUSE_KEEPING')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "This pipeline calls stored procedure and rebuilds the indexes on every Sunday and 1st of every month.",
+                "activities": [
+                    {
+                        "name": "SP_CALL_HOUSE_KEEPING",
+                        "description": "Procedure to rebuild the indexes",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 5,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "dbo.pr_house_keeping"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "LS_AzureSql_CAL",
+                            "type": "LinkedServiceReference"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "folder": {
+                    "name": "CAL_PROD"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-06-14T06:02:34Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_CHILD_TMO_API_FULL_LOAD_bkp')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "GET_API_RESPONSE",
+                        "type": "WebActivity",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "method": "GET",
+                            "headers": {
+                                "Token": {
+                                    "value": "@pipeline().parameters.token",
+                                    "type": "Expression"
+                                },
+                                "Database": {
+                                    "value": "@pipeline().parameters.dbase_name",
+                                    "type": "Expression"
+                                }
+                            },
+                            "httpRequestTimeout": "00:10:00",
+                            "url": {
+                                "value": "@pipeline().parameters.api_url",
+                                "type": "Expression"
+                            },
+                            "connectVia": {
+                                "referenceName": "CAL-AutoResolveintegrationRuntime",
+                                "type": "IntegrationRuntimeReference"
+                            }
+                        }
+                    },
+                    {
+                        "name": "SP_CALL_CURATE_API_DATA_SUCCESS",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "GET_API_RESPONSE",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "dbo.pr_curate_api_data",
+                            "storedProcedureParameters": {
+                                "ApiRk": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_rk",
+                                        "type": "Expression"
+                                    },
+                                    "type": "Int32"
+                                },
+                                "APIRequest": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_url",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "APIResponse": {
+                                    "value": {
+                                        "value": "@string(activity('GET_API_RESPONSE').output)",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "IsError": {
+                                    "value": "0",
+                                    "type": "Int16"
+                                },
+                                "RequestedBy": {
+                                    "value": {
+                                        "value": "@pipeline().TriggeredByPipelineName",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "Mode": {
+                                    "value": "A",
+                                    "type": "String"
+                                },
+                                "APIKeyValue": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_key_value",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "APIBatchId": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.batch_id",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                }
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "LS_AzureSql_CAL",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "SP_CALL_CURATE_API_DATA_FAIL",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "GET_API_RESPONSE",
+                                "dependencyConditions": [
+                                    "Failed"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "dbo.pr_curate_api_data",
+                            "storedProcedureParameters": {
+                                "ApiRk": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_rk",
+                                        "type": "Expression"
+                                    },
+                                    "type": "Int32"
+                                },
+                                "APIRequest": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_url",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "APIResponse": {
+                                    "value": {
+                                        "value": "@activity('GET_API_RESPONSE').output",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "IsError": {
+                                    "value": "1",
+                                    "type": "Int16"
+                                },
+                                "RequestedBy": {
+                                    "value": {
+                                        "value": "@pipeline().TriggeredByPipelineName",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "Mode": {
+                                    "value": "A",
+                                    "type": "String"
+                                },
+                                "APIKeyValue": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_key_value",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "APIBatchId": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.batch_id",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                }
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "LS_AzureSql_CAL",
+                            "type": "LinkedServiceReference"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "api_rk": {
+                        "type": "int"
+                    },
+                    "api_url": {
+                        "type": "string"
+                    },
+                    "token": {
+                        "type": "string"
+                    },
+                    "dbase_name": {
+                        "type": "string"
+                    },
+                    "api_key_value": {
+                        "type": "string"
+                    },
+                    "last_run_successfully": {
+                        "type": "string"
+                    },
+                    "api_override_parameter_value": {
+                        "type": "string"
+                    },
+                    "batch_id": {
+                        "type": "string"
+                    }
+                },
+                "folder": {
+                    "name": "Analysis"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-10-29T08:33:44Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_CHILD_REFRESH_FCT_DATA_bkp')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Pipeline to refresh the fact tables data",
+                "activities": [
+                    {
+                        "name": "SP_REFRESH_FACT_DATA",
+                        "description": "Call pr_curate_fct_data sp to refresh the fact data",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 60,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "pr_curate_fct_data",
+                            "storedProcedureParameters": {
+                                "ApiCode": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.api_code",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                },
+                                "RequestedBy": {
+                                    "value": {
+                                        "value": "@pipeline().parameters.requested_by",
+                                        "type": "Expression"
+                                    },
+                                    "type": "String"
+                                }
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "LS_AzureSql_CAL",
+                            "type": "LinkedServiceReference"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "api_code": {
+                        "type": "string"
+                    },
+                    "requested_by": {
+                        "type": "string"
+                    }
+                },
+                "folder": {
+                    "name": "Analysis"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-10-29T08:33:44Z"
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/PL_CHILD_POST_ADD_FUNDINGS')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "This pipeline calls the post API add fundings.",
+                "activities": [
+                    {
+                        "name": "CALL_ADD_FUNDINGS_API",
+                        "type": "WebActivity",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 3,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "method": "POST",
+                            "headers": {
+                                "Token": {
+                                    "value": "@pipeline().parameters.token",
+                                    "type": "Expression"
+                                },
+                                "Database": {
+                                    "value": "@pipeline().parameters.dbase_name",
+                                    "type": "Expression"
+                                }
+                            },
+                            "url": {
+                                "value": "@pipeline().parameters.api_url",
+                                "type": "Expression"
+                            },
+                            "body": {
+                                "value": "@pipeline().parameters.api_body",
+                                "type": "Expression"
+                            }
+                        }
+                    },
+                    {
+                        "name": "SCR_UPDATE_FUND_ADJUSTMENT_DETAIL",
+                        "type": "Script",
+                        "dependsOn": [
+                            {
+                                "activity": "SET_VARIABLE_API_RESPONSE",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "linkedServiceName": {
+                            "referenceName": "LS_AzureSql_CAL",
+                            "type": "LinkedServiceReference"
+                        },
+                        "typeProperties": {
+                            "scripts": [
+                                {
+                                    "parameters": [
+                                        {
+                                            "name": "api_response",
+                                            "type": "String",
+                                            "value": {
+                                                "value": "@variables('varjsonstring')",
+                                                "type": "Expression"
+                                            },
+                                            "direction": "Input"
+                                        },
+                                        {
+                                            "name": "account_no",
+                                            "type": "String",
+                                            "value": {
+                                                "value": "@pipeline().parameters.account_no",
+                                                "type": "Expression"
+                                            },
+                                            "direction": "Input"
+                                        }
+                                    ],
+                                    "type": "Query",
+                                    "text": {
+                                        "value": "UPDATE fund_adjustment_detail SET is_processed = 1,process_status = 'PS',process_status_desc = 'Processed Successfully',api_response = @api_response,adjustment_posted_on= GETDATE() WHERE is_processed = 0 AND account_no = @account_no",
+                                        "type": "Expression"
+                                    }
+                                }
+                            ],
+                            "scriptBlockExecutionTimeout": "02:00:00"
+                        }
+                    },
+                    {
+                        "name": "SET_VARIABLE_API_RESPONSE",
+                        "type": "SetVariable",
+                        "dependsOn": [
+                            {
+                                "activity": "CALL_ADD_FUNDINGS_API",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "variableName": "varjsonstring",
+                            "value": {
+                                "value": "@string(concat('{',\n  '\"Data\":', string(activity('CALL_ADD_FUNDINGS_API').output.Data), ',',\n  '\"ErrorMessage\":', if(equals(activity('CALL_ADD_FUNDINGS_API').output.ErrorMessage, null), 'null', string(activity('CALL_ADD_FUNDINGS_API').output.ErrorMessage)), ',',\n  '\"ErrorNumber\":', string(activity('CALL_ADD_FUNDINGS_API').output.ErrorNumber), ',',\n  '\"Status\":', string(activity('CALL_ADD_FUNDINGS_API').output.Status),\n'}'))",
+                                "type": "Expression"
+                            }
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "parameters": {
+                    "api_url": {
+                        "type": "string"
+                    },
+                    "token": {
+                        "type": "string"
+                    },
+                    "dbase_name": {
+                        "type": "string"
+                    },
+                    "account_no": {
+                        "type": "string"
+                    },
+                    "api_body": {
+                        "type": "string"
+                    }
+                },
+                "variables": {
+                    "varjsonstring": {
+                        "type": "String"
+                    }
+                },
+                "folder": {
+                    "name": "CAL_PROD"
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-10-29T08:53:59Z"
+            },
+            "dependsOn": []
+        }
+    ]
+}
