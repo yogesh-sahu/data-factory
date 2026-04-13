@@ -1,0 +1,234 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_CHILD_TMO_API_FULL_LOAD WEB_DEVFULL')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "GET_API_RESPONSE",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "GET",
+                    "headers": {
+                        "Token": {
+                            "value": "@pipeline().parameters.token",
+                            "type": "Expression"
+                        },
+                        "Database": {
+                            "value": "@pipeline().parameters.dbase_name",
+                            "type": "Expression"
+                        }
+                    },
+                    "url": {
+                        "value": "@pipeline().parameters.api_url",
+                        "type": "Expression"
+                    }
+                }
+            },
+            {
+                "name": "SP_CALL_CURATE_API_DATA_SUCCESS",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "GET_API_RESPONSE",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "[[dbo].[pr_curate_api_data_full]",
+                    "storedProcedureParameters": {
+                        "ApiRk": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_rk",
+                                "type": "Expression"
+                            },
+                            "type": "Int32"
+                        },
+                        "APIRequest": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_url",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "APIResponse": {
+                            "value": {
+                                "value": "@string(activity('GET_API_RESPONSE').output)",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "IsError": {
+                            "value": "0",
+                            "type": "Int16"
+                        },
+                        "RequestedBy": {
+                            "value": {
+                                "value": "@pipeline().TriggeredByPipelineName",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "Mode": {
+                            "value": "A",
+                            "type": "String"
+                        },
+                        "APIKeyValue": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_key_value",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "APIBatchId": {
+                            "value": {
+                                "value": "@pipeline().parameters.batch_id",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_DEV",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "SP_CALL_CURATE_API_DATA_SUCCESS_copy1",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "GET_API_RESPONSE",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "[[dbo].[pr_curate_api_data_full]",
+                    "storedProcedureParameters": {
+                        "ApiRk": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_rk",
+                                "type": "Expression"
+                            },
+                            "type": "Int32"
+                        },
+                        "APIRequest": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_url",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "APIResponse": {
+                            "value": {
+                                "value": "@string(activity('GET_API_RESPONSE').output)",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "IsError": {
+                            "value": "1",
+                            "type": "Int16"
+                        },
+                        "RequestedBy": {
+                            "value": {
+                                "value": "@pipeline().TriggeredByPipelineName",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "Mode": {
+                            "value": "A",
+                            "type": "String"
+                        },
+                        "APIKeyValue": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_key_value",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "APIBatchId": {
+                            "value": {
+                                "value": "@pipeline().parameters.batch_id",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_DEV",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "parameters": {
+            "api_rk": {
+                "type": "int"
+            },
+            "api_url": {
+                "type": "string"
+            },
+            "token": {
+                "type": "string"
+            },
+            "dbase_name": {
+                "type": "string"
+            },
+            "api_key_value": {
+                "type": "string"
+            },
+            "last_run_successfully": {
+                "type": "string"
+            },
+            "api_override_parameter_value": {
+                "type": "string"
+            },
+            "batch_id": {
+                "type": "string"
+            }
+        },
+        "folder": {
+            "name": "DEV_FULL"
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-02-27T06:36:08Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_AzureSql_CAL_DEV')]"
+    ]
+}

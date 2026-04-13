@@ -1,0 +1,40 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_ADDFUNDING')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_ADDFUNDING",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "src_continer_name": {
+                "type": "string"
+            },
+            "src_file_name": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "type": "Excel",
+        "typeProperties": {
+            "sheetName": "Sheet1",
+            "location": {
+                "type": "AzureBlobStorageLocation",
+                "fileName": {
+                    "value": "@dataset().src_file_name",
+                    "type": "Expression"
+                },
+                "container": {
+                    "value": "@dataset().src_continer_name",
+                    "type": "Expression"
+                }
+            },
+            "firstRowAsHeader": true
+        },
+        "schema": []
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_ADDFUNDING')]"
+    ]
+}

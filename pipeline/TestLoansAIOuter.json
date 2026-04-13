@@ -1,0 +1,176 @@
+{
+    "name": "[concat(parameters('factoryName'), '/TestLoansAIOuter')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "Lookup3",
+                "type": "Lookup",
+                "dependsOn": [
+                    {
+                        "activity": "Lookup2",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT DISTINCT GroupNumber FROM LoanAdditionalInfoAPI",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL_DYN",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "stg_obj_name": "dim_loan"
+                        }
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach1",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "Lookup3",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('Lookup3').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "Execute Pipeline1",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "TestLoansAIInner",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true,
+                                "parameters": {
+                                    "Directory": {
+                                        "value": "@pipeline().parameters.Directory",
+                                        "type": "Expression"
+                                    },
+                                    "GroupNumber": {
+                                        "value": "@item().GroupNumber",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "Lookup1",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "TRUNCATE TABLE LoanAdditionalInfoAPI; SELECT 1;",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "Lookup2",
+                "type": "Lookup",
+                "dependsOn": [
+                    {
+                        "activity": "Lookup1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "WITH base_data\nAS (\n\tSELECT t2.account_no\n\t\t,FORMAT(GETDATE(), 'yyyyMMdd_hhmmss') AS batch_id\n\t\t,t1.api_rk\n\t\t,t1.api_code\n\t\t,REPLACE(t1.api_url, '#ACCOUNT_NO', t2.account_no) AS api_url\n\t\t,t1.api_desc\n\t\t,t1.api_type\n\t\t,t1.api_prop\n\t\t,t1.api_override_applicable\n\t\t,t1.api_override_parameter_value\n\t\t,t1.last_run_successfully\n\t\t,t1.execution_seq_no\n\t\t,t1.valid_flag\n\t\t,t1.valid_from_date\n\t\t,t1.valid_to_date\n\t\t,t1.created_by\n\t\t,t1.created_on\n\t\t,t1.updated_by\n\t\t,t1.updated_on\n\t\t,t1.token\n\t\t,t1.dbase_name\n\t\t,CAST(t2.loan_rk AS VARCHAR(10)) + '_' + t2.account_no AS key_value\n\tFROM vw_api_master t1\n\tCROSS JOIN dim_loan t2\n\tWHERE t1.api_code = 'GET_LOAN_BY_AN'\n\t\tAND t2.valid_flag = 'Y'\n\t)\n\t,numbered_data\nAS (\n\tSELECT *\n\t\t,ROW_NUMBER() OVER (\n\t\t\tORDER BY key_value ASC\n\t\t\t) AS RowNumber\n\t\t,-- Sequential numbering (no gaps)\n\t\tCOUNT(*) OVER () AS total_count\n\tFROM base_data\n\t)\nINSERT INTO LoanAdditionalInfoAPI (\n\tis_last_row\n\t,total_count\n\t,RowNumber\n\t,GroupNumber\n\t,account_no\n\t,api_rk\n\t,api_code\n\t,api_url\n\t,token\n\t,dbase_name\n\t,key_value\n\t)\nSELECT CASE \n\t\tWHEN RowNumber = total_count\n\t\t\tTHEN '1'\n\t\tELSE '0'\n\t\tEND AS is_last_row\n\t,total_count\n\t,RowNumber\n\t,((RowNumber - 1) / 450) + 1 AS GroupNumber\n\t,account_no\n\t,api_rk\n\t,api_code\n\t,api_url\n\t,token\n\t,dbase_name\n\t,key_value\nFROM numbered_data\nORDER BY RowNumber;\n\nSELECT 1;",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "firstRowOnly": false
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "parameters": {
+            "Directory": {
+                "type": "string",
+                "defaultValue": "LoanAdditionalInfo"
+            },
+            "FileName": {
+                "type": "string"
+            }
+        },
+        "folder": {
+            "name": "CAL TESTS"
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-01-31T19:27:54Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_AZURE_SQL_CAL_DYN')]",
+        "[concat(variables('factoryId'), '/datasets/DS_AZURE_SQL_CAL')]",
+        "[concat(variables('factoryId'), '/pipelines/TestLoansAIInner')]"
+    ]
+}

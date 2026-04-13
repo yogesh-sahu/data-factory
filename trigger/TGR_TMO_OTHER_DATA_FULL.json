@@ -1,0 +1,47 @@
+{
+    "name": "[concat(parameters('factoryName'), '/TGR_TMO_OTHER_DATA_FULL')]",
+    "type": "Microsoft.DataFactory/factories/triggers",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "description": "To load get loan by an, lender portfolio",
+        "annotations": [],
+        "runtimeState": "Started",
+        "pipelines": [
+            {
+                "pipelineReference": {
+                    "referenceName": "PL_LOAD_LOAN_ADDITIONAL_INFO_FULL",
+                    "type": "PipelineReference"
+                },
+                "parameters": {}
+            },
+            {
+                "pipelineReference": {
+                    "referenceName": "PL_LOAD_LENDER_PORTFOLIO_DETAIL_FULL",
+                    "type": "PipelineReference"
+                },
+                "parameters": {}
+            }
+        ],
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+            "recurrence": {
+                "frequency": "Day",
+                "interval": 1,
+                "startTime": "2026-03-20T12:00:00",
+                "timeZone": "India Standard Time",
+                "schedule": {
+                    "minutes": [
+                        0
+                    ],
+                    "hours": [
+                        17
+                    ]
+                }
+            }
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/pipelines/PL_LOAD_LOAN_ADDITIONAL_INFO_FULL')]",
+        "[concat(variables('factoryId'), '/pipelines/PL_LOAD_LENDER_PORTFOLIO_DETAIL_FULL')]"
+    ]
+}

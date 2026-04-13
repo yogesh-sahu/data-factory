@@ -1,0 +1,129 @@
+{
+    "name": "[concat(parameters('factoryName'), '/LenderPortfolio MCOCI')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "GET_LENDER_PORTFFOLIO",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "RestSource",
+                        "httpRequestTimeout": "00:01:40",
+                        "requestInterval": "00.00:00:00.010",
+                        "requestMethod": "GET",
+                        "additionalHeaders": {
+                            "Token": "9BD8E421EF0D467F8784C4B74A3B65CF",
+                            "Database": "001-7777-000-Capital Asset Lending"
+                        },
+                        "paginationRules": {
+                            "supportRFC5988": "true"
+                        }
+                    },
+                    "sink": {
+                        "type": "JsonSink",
+                        "storeSettings": {
+                            "type": "AzureBlobStorageWriteSettings"
+                        },
+                        "formatSettings": {
+                            "type": "JsonWriteSettings"
+                        }
+                    },
+                    "enableStaging": false
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DS_TMOLenderPortfolio",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "URL": "https://api-ca.themortgageoffice.com/LSS.svc/GetLenderPortfolio/MCOCI-MIC"
+                        }
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DS_JSON_PROD",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "FIleName": {
+                                "value": "@concat(pipeline().parameters.FileName,pipeline().parameters.api_key_value,'_',formatDateTime(utcNow(), 'yyyyMMdd'),'.json')",
+                                "type": "Expression"
+                            },
+                            "Directory": {
+                                "value": "@pipeline().parameters.Directory",
+                                "type": "Expression"
+                            },
+                            "Container": "dataloads"
+                        }
+                    }
+                ]
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "parameters": {
+            "api_rk": {
+                "type": "int",
+                "defaultValue": 3
+            },
+            "api_url": {
+                "type": "string",
+                "defaultValue": "https://api-ca.themortgageoffice.com/LSS.svc/GetLenderPortfolio/MCOCI-MIC"
+            },
+            "token": {
+                "type": "string",
+                "defaultValue": "9BD8E421EF0D467F8784C4B74A3B65CF"
+            },
+            "dbase_name": {
+                "type": "string",
+                "defaultValue": "001-7777-000-Capital Asset Lending"
+            },
+            "api_key_value": {
+                "type": "string",
+                "defaultValue": "MCOCI-MIC"
+            },
+            "last_run_successfully": {
+                "type": "string"
+            },
+            "api_override_parameter_value": {
+                "type": "string"
+            },
+            "batch_id": {
+                "type": "string",
+                "defaultValue": "20260203_070020"
+            },
+            "FileName": {
+                "type": "string",
+                "defaultValue": "LenderPortfolio"
+            },
+            "Directory": {
+                "type": "string",
+                "defaultValue": "LenderPortfolio"
+            },
+            "Container": {
+                "type": "string",
+                "defaultValue": "daily-data-refresh"
+            }
+        },
+        "folder": {
+            "name": "CAL TESTS"
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-02-08T21:53:01Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_TMOLenderPortfolio')]",
+        "[concat(variables('factoryId'), '/datasets/DS_JSON_PROD')]"
+    ]
+}

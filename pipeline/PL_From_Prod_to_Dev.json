@@ -1,0 +1,362 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_From_Prod_to_Dev')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "dim_loan",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "dim_loan_custom_info",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT * FROM dim_loan",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "AzureSqlSink",
+                        "writeBehavior": "insert",
+                        "sqlWriterUseTableLock": false,
+                        "tableOption": "autoCreate",
+                        "disableMetricsCollection": false
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DS_Prod",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DS_Dev",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ]
+            },
+            {
+                "name": "dim_loan_custom_info",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "fct_loan_history",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT * FROM dim_loan_custom_info",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "AzureSqlSink",
+                        "writeBehavior": "insert",
+                        "sqlWriterUseTableLock": false,
+                        "tableOption": "autoCreate",
+                        "disableMetricsCollection": false
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DS_Prod",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DS_Dev",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ]
+            },
+            {
+                "name": "dim_lender_portfolio",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "fct_loan",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT * FROM dim_lender_portfolio",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "AzureSqlSink",
+                        "writeBehavior": "insert",
+                        "sqlWriterUseTableLock": false,
+                        "tableOption": "autoCreate",
+                        "disableMetricsCollection": false
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DS_Prod",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DS_Dev",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ]
+            },
+            {
+                "name": "fct_loan_history",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "dim_opportunity",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT * FROM fct_loan_history",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "AzureSqlSink",
+                        "writeBehavior": "insert",
+                        "sqlWriterUseTableLock": false,
+                        "tableOption": "autoCreate",
+                        "disableMetricsCollection": false
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DS_Prod",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DS_Dev",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ]
+            },
+            {
+                "name": "dim_opportunity",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "dim_lender_portfolio",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT * FROM dim_opportunity",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "AzureSqlSink",
+                        "writeBehavior": "insert",
+                        "sqlWriterUseTableLock": false,
+                        "tableOption": "autoCreate",
+                        "disableMetricsCollection": false
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DS_Prod",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DS_Dev",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ]
+            },
+            {
+                "name": "fct_loan",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT * FROM fct_lender_portfolio WHERE day_rk <= 20250924",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "AzureSqlSink",
+                        "writeBehavior": "insert",
+                        "sqlWriterUseTableLock": false,
+                        "tableOption": "autoCreate",
+                        "disableMetricsCollection": false
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DS_Prod",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DS_Dev",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ]
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "folder": {
+            "name": "Analysis"
+        },
+        "annotations": [],
+        "lastPublishTime": "2025-09-28T05:50:31Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_Prod')]",
+        "[concat(variables('factoryId'), '/datasets/DS_Dev')]"
+    ]
+}

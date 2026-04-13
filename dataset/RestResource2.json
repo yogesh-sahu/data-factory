@@ -1,0 +1,28 @@
+{
+    "name": "[concat(parameters('factoryName'), '/RestResource2')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "Is_abhi_loanhistory_v2",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "relativeUrl": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "type": "RestResource",
+        "typeProperties": {
+            "relativeUrl": {
+                "value": "@dataset().relativeUrl",
+                "type": "Expression"
+            }
+        },
+        "schema": []
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/Is_abhi_loanhistory_v2')]"
+    ]
+}

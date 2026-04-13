@@ -1,0 +1,24 @@
+{
+    "name": "[concat(parameters('factoryName'), '/Parquet2')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_BLOB_totalw1_DEV",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "Parquet",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobStorageLocation",
+                "container": "snapshots"
+            },
+            "compressionCodec": "snappy"
+        },
+        "schema": []
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_BLOB_totalw1_DEV')]"
+    ]
+}

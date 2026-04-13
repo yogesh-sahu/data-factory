@@ -1,0 +1,415 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_CHILD_FULL_LOAD_BY_TS_DEV')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "Get Metadata1",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "DS_JSON_BY_TS_RAW",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "fieldList": [
+                        "childItems"
+                    ],
+                    "storeSettings": {
+                        "type": "AzureBlobStorageReadSettings",
+                        "recursive": true,
+                        "enablePartitionDiscovery": false
+                    },
+                    "formatSettings": {
+                        "type": "JsonReadSettings"
+                    }
+                }
+            },
+            {
+                "name": "ForEach1",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "Get Metadata1",
+                        "dependencyConditions": [
+                            "Completed"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('Get Metadata1').output.childItems",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "Lookup1",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureSqlSource",
+                                    "sqlReaderQuery": {
+                                        "value": "@concat(\n'SELECT 1 FROM dbo.api_response_full WHERE file_name = ''',\nitem().name,\n''''\n)",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "dataset": {
+                                    "referenceName": "DS_RAW_RESPONSE_LOAN_BY_TS",
+                                    "type": "DatasetReference",
+                                    "parameters": {}
+                                },
+                                "firstRowOnly": false
+                            }
+                        },
+                        {
+                            "name": "If Condition1",
+                            "type": "IfCondition",
+                            "dependsOn": [
+                                {
+                                    "activity": "Lookup1",
+                                    "dependencyConditions": [
+                                        "Completed"
+                                    ]
+                                }
+                            ],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "expression": {
+                                    "value": "@equals(length(activity('Lookup1').output.value), 0)",
+                                    "type": "Expression"
+                                },
+                                "ifTrueActivities": [
+                                    {
+                                        "name": "Copy data2",
+                                        "type": "Copy",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "DelimitedTextSource",
+                                                "additionalColumns": [
+                                                    {
+                                                        "name": "api_url",
+                                                        "value": {
+                                                            "value": "@concat(\n'https://api-ca.themortgageoffice.com/LSS.svc/GetLoansByTimestamp/',\nstring(split(item().name,'_')[1]),\n'-01-01 00:00:00/',\nstring(split(item().name,'_')[1]),\n'-12-31 23:59:59'\n)",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "file_name",
+                                                        "value": "$$FILENAME"
+                                                    },
+                                                    {
+                                                        "name": "created_by",
+                                                        "value": {
+                                                            "value": "@pipeline().Pipeline",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "created_on",
+                                                        "value": {
+                                                            "value": "@utcNow()",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "updated_by",
+                                                        "value": {
+                                                            "value": "@pipeline().Pipeline",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "updated_on",
+                                                        "value": {
+                                                            "value": "@utcNow()",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "batch_id",
+                                                        "value": {
+                                                            "value": "@formatDateTime(utcNow(),'yyyyMMdd_HHmmss')",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "as_at_date_rk",
+                                                        "value": {
+                                                            "value": "@formatDateTime(utcNow(),'yyyyMMdd')",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "key_value",
+                                                        "value": {
+                                                            "value": "@concat(\n    split(item().name,'_')[1],\n    '-01-01_',\n    split(item().name,'_')[1],\n    '-12-31'\n)",
+                                                            "type": "Expression"
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "api_rk",
+                                                        "value": {
+                                                            "value": "1",
+                                                            "type": "Expression"
+                                                        }
+                                                    }
+                                                ],
+                                                "storeSettings": {
+                                                    "type": "AzureBlobStorageReadSettings",
+                                                    "recursive": true,
+                                                    "enablePartitionDiscovery": false
+                                                },
+                                                "formatSettings": {
+                                                    "type": "DelimitedTextReadSettings"
+                                                }
+                                            },
+                                            "sink": {
+                                                "type": "AzureSqlSink",
+                                                "writeBehavior": "insert",
+                                                "sqlWriterUseTableLock": false
+                                            },
+                                            "enableStaging": false,
+                                            "translator": {
+                                                "type": "TabularTranslator",
+                                                "mappings": [
+                                                    {
+                                                        "source": {
+                                                            "type": "String",
+                                                            "ordinal": 1
+                                                        },
+                                                        "sink": {
+                                                            "name": "api_response",
+                                                            "type": "String",
+                                                            "physicalType": "nvarchar"
+                                                        }
+                                                    },
+                                                    {
+                                                        "source": {
+                                                            "name": "api_url",
+                                                            "type": "String"
+                                                        },
+                                                        "sink": {
+                                                            "name": "api_request",
+                                                            "type": "String",
+                                                            "physicalType": "varchar"
+                                                        }
+                                                    },
+                                                    {
+                                                        "source": {
+                                                            "name": "file_name",
+                                                            "type": "String"
+                                                        },
+                                                        "sink": {
+                                                            "name": "file_name",
+                                                            "type": "String",
+                                                            "physicalType": "varchar"
+                                                        }
+                                                    },
+                                                    {
+                                                        "source": {
+                                                            "name": "created_by",
+                                                            "type": "String"
+                                                        },
+                                                        "sink": {
+                                                            "name": "created_by",
+                                                            "type": "String",
+                                                            "physicalType": "varchar"
+                                                        }
+                                                    },
+                                                    {
+                                                        "source": {
+                                                            "name": "created_on",
+                                                            "type": "String"
+                                                        },
+                                                        "sink": {
+                                                            "name": "created_on",
+                                                            "type": "DateTime",
+                                                            "physicalType": "datetime"
+                                                        }
+                                                    },
+                                                    {
+                                                        "source": {
+                                                            "name": "updated_by",
+                                                            "type": "String"
+                                                        },
+                                                        "sink": {
+                                                            "name": "updated_by",
+                                                            "type": "String",
+                                                            "physicalType": "varchar"
+                                                        }
+                                                    },
+                                                    {
+                                                        "source": {
+                                                            "name": "updated_on",
+                                                            "type": "String"
+                                                        },
+                                                        "sink": {
+                                                            "name": "updated_on",
+                                                            "type": "DateTime",
+                                                            "physicalType": "datetime"
+                                                        }
+                                                    },
+                                                    {
+                                                        "source": {
+                                                            "name": "batch_id"
+                                                        },
+                                                        "sink": {
+                                                            "name": "batch_id",
+                                                            "type": "String",
+                                                            "physicalType": "varchar"
+                                                        }
+                                                    },
+                                                    {
+                                                        "source": {
+                                                            "name": "as_at_date_rk"
+                                                        },
+                                                        "sink": {
+                                                            "name": "as_at_date_rk",
+                                                            "type": "Int32",
+                                                            "physicalType": "int"
+                                                        }
+                                                    },
+                                                    {
+                                                        "source": {
+                                                            "name": "key_value"
+                                                        },
+                                                        "sink": {
+                                                            "name": "key_value",
+                                                            "type": "String",
+                                                            "physicalType": "varchar"
+                                                        }
+                                                    },
+                                                    {
+                                                        "source": {
+                                                            "name": "api_rk"
+                                                        },
+                                                        "sink": {
+                                                            "name": "api_rk",
+                                                            "type": "Int32",
+                                                            "physicalType": "int"
+                                                        }
+                                                    }
+                                                ],
+                                                "typeConversion": true,
+                                                "typeConversionSettings": {
+                                                    "allowDataTruncation": true,
+                                                    "treatBooleanAsNumber": false
+                                                }
+                                            }
+                                        },
+                                        "inputs": [
+                                            {
+                                                "referenceName": "DS_RESPONSE_CSV_BY_TS",
+                                                "type": "DatasetReference",
+                                                "parameters": {
+                                                    "fileName": "@item().name"
+                                                }
+                                            }
+                                        ],
+                                        "outputs": [
+                                            {
+                                                "referenceName": "DS_RAW_RESPONSE_LOAN_BY_TS",
+                                                "type": "DatasetReference",
+                                                "parameters": {}
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "Stored procedure1",
+                "type": "SqlServerStoredProcedure",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "[[dbo].[sp_set_raw_flags]"
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_DEV",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "Stored procedure2",
+                "type": "SqlServerStoredProcedure",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "[[dbo].[sp_build_final_dynamic]"
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_DEV",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "folder": {
+            "name": "CAL TESTS"
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-02-23T14:16:02Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_JSON_BY_TS_RAW')]",
+        "[concat(variables('factoryId'), '/linkedServices/LS_AzureSql_CAL_DEV')]",
+        "[concat(variables('factoryId'), '/datasets/DS_RAW_RESPONSE_LOAN_BY_TS')]",
+        "[concat(variables('factoryId'), '/datasets/DS_RESPONSE_CSV_BY_TS')]"
+    ]
+}

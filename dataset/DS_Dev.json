@@ -1,0 +1,21 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_Dev')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_Dev",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "AzureSqlTable",
+        "schema": [],
+        "typeProperties": {
+            "schema": "dbo",
+            "table": "fct_lender_portfolio_sep23"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_Dev')]"
+    ]
+}

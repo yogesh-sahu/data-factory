@@ -1,0 +1,20 @@
+{
+    "name": "[concat(parameters('factoryName'), '/LS_Salesforce_Preprod_Appraisal')]",
+    "type": "Microsoft.DataFactory/factories/linkedServices",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "annotations": [],
+        "type": "SalesforceV2",
+        "typeProperties": {
+            "environmentUrl": "[parameters('LS_Salesforce_Preprod_Appraisal_properties_typeProperties_environmentUrl')]",
+            "clientId": "[parameters('LS_Salesforce_Preprod_Appraisal_properties_typeProperties_clientId')]",
+            "clientSecret": {
+                "type": "SecureString",
+                "value": "[parameters('LS_Salesforce_Preprod_Appraisal_clientSecret')]"
+            },
+            "apiVersion": "54.0",
+            "authenticationType": "OAuth2ClientCredential"
+        }
+    },
+    "dependsOn": []
+}

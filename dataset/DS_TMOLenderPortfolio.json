@@ -1,0 +1,28 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_TMOLenderPortfolio')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "TMOLenderPortfolio",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "URL": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "type": "RestResource",
+        "typeProperties": {
+            "relativeUrl": {
+                "value": "@dataset().URL",
+                "type": "Expression"
+            }
+        },
+        "schema": []
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/TMOLenderPortfolio')]"
+    ]
+}

@@ -1,0 +1,123 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_LOAD_LOAN_ADDITIONAL_INFO_FULL')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "description": "Load the data using get account details by account no. This is for open accounts\n",
+        "activities": [
+            {
+                "name": "LOOKUP_LOAN_ADDITIONAL_INFO",
+                "description": "Get additional  info of loan",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 5,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "select top 1 * from vw_open_loan_account_additional_info_full\norder by is_last_row asc",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL_FULL",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach1",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "LOOKUP_LOAN_ADDITIONAL_INFO",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('LOOKUP_LOAN_ADDITIONAL_INFO').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "EXEC_PL_CHILD_PROCESS_LOAN_ADDITINAL_INDO",
+                            "description": "Call child pipeline to load loan additional info data",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "PL_CHILD_TMO_API_FULL_LOAD WEB_FULL",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true,
+                                "parameters": {
+                                    "api_rk": {
+                                        "value": "@item().api_rk",
+                                        "type": "Expression"
+                                    },
+                                    "api_url": {
+                                        "value": "@item().api_url",
+                                        "type": "Expression"
+                                    },
+                                    "token": {
+                                        "value": "@item().token",
+                                        "type": "Expression"
+                                    },
+                                    "dbase_name": {
+                                        "value": "@item().dbase_name",
+                                        "type": "Expression"
+                                    },
+                                    "api_key_value": {
+                                        "value": "@item().key_value",
+                                        "type": "Expression"
+                                    },
+                                    "last_run_successfully": {
+                                        "value": "@item().last_run_successfully",
+                                        "type": "Expression"
+                                    },
+                                    "api_override_parameter_value": {
+                                        "value": "@item().api_override_parameter_value",
+                                        "type": "Expression"
+                                    },
+                                    "batch_id": {
+                                        "value": "@formatDateTime(utcNow(),'yyyyMMdd_HHmmss')",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "folder": {
+            "name": "PROD_FULL"
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-03-20T11:51:14Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_AZURE_SQL_CAL_FULL')]",
+        "[concat(variables('factoryId'), '/pipelines/PL_CHILD_TMO_API_FULL_LOAD WEB_FULL')]"
+    ]
+}

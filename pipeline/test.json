@@ -1,0 +1,166 @@
+{
+    "name": "[concat(parameters('factoryName'), '/test')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "GET_API_RESPONSE",
+                "type": "WebActivity",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "method": "GET",
+                    "headers": {
+                        "Token": {
+                            "value": "@pipeline().parameters.token",
+                            "type": "Expression"
+                        },
+                        "Database": {
+                            "value": "@pipeline().parameters.dbase_name",
+                            "type": "Expression"
+                        }
+                    },
+                    "httpRequestTimeout": "00:10:00",
+                    "url": {
+                        "value": "@pipeline().parameters.api_url",
+                        "type": "Expression"
+                    },
+                    "connectVia": {
+                        "referenceName": "CAL-AutoResolveintegrationRuntime",
+                        "type": "IntegrationRuntimeReference"
+                    }
+                }
+            },
+            {
+                "name": "SP_CALL_CURATE_API_DATA_SUCCESS",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "GET_API_RESPONSE",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "dbo.pr_curate_api_data",
+                    "storedProcedureParameters": {
+                        "ApiRk": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_rk",
+                                "type": "Expression"
+                            },
+                            "type": "Int32"
+                        },
+                        "APIRequest": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_url",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "APIResponse": {
+                            "value": {
+                                "value": "@string(activity('GET_API_RESPONSE').output)",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "IsError": {
+                            "value": "0",
+                            "type": "Int16"
+                        },
+                        "RequestedBy": {
+                            "value": "PL_LOAD_LOAN_LENDER_PORTFOLIO_DETAIL",
+                            "type": "String"
+                        },
+                        "Mode": {
+                            "value": "A",
+                            "type": "String"
+                        },
+                        "APIKeyValue": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_key_value",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "APIBatchId": {
+                            "value": {
+                                "value": "@pipeline().parameters.batch_id",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_DEV",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "parameters": {
+            "api_rk": {
+                "type": "int",
+                "defaultValue": 3
+            },
+            "api_url": {
+                "type": "string",
+                "defaultValue": "https://api-ca.themortgageoffice.com/LSS.svc/GetLenderPortfolio/IFLP2025-1"
+            },
+            "token": {
+                "type": "string",
+                "defaultValue": "9BD8E421EF0D467F8784C4B74A3B65CF"
+            },
+            "dbase_name": {
+                "type": "string",
+                "defaultValue": "001-7777-000-Capital Asset Lending"
+            },
+            "api_key_value": {
+                "type": "string",
+                "defaultValue": "IFLP2025-1"
+            },
+            "last_run_successfully": {
+                "type": "string",
+                "defaultValue": "F"
+            },
+            "api_override_parameter_value": {
+                "type": "string",
+                "defaultValue": {}
+            },
+            "batch_id": {
+                "type": "string",
+                "defaultValue": "20260406"
+            }
+        },
+        "folder": {
+            "name": "CAL TESTS"
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-04-06T08:54:20Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/integrationRuntimes/CAL-AutoResolveintegrationRuntime')]",
+        "[concat(variables('factoryId'), '/linkedServices/LS_AzureSql_CAL_DEV')]"
+    ]
+}

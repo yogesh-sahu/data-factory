@@ -1,0 +1,20 @@
+{
+    "name": "[concat(parameters('factoryName'), '/Salesforce1')]",
+    "type": "Microsoft.DataFactory/factories/linkedServices",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "annotations": [],
+        "type": "SalesforceV2",
+        "typeProperties": {
+            "environmentUrl": "[parameters('Salesforce1_properties_typeProperties_environmentUrl')]",
+            "clientId": "[parameters('Salesforce1_properties_typeProperties_clientId')]",
+            "clientSecret": {
+                "type": "SecureString",
+                "value": "[parameters('Salesforce1_clientSecret')]"
+            },
+            "apiVersion": "51.0",
+            "authenticationType": "OAuth2ClientCredential"
+        }
+    },
+    "dependsOn": []
+}

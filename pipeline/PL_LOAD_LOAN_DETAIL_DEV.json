@@ -1,0 +1,166 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_LOAD_LOAN_DETAIL_DEV')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "description": "Load the data using get loans detail by timestamp API",
+        "activities": [
+            {
+                "name": "LOOKUP_LOAN_DETAILS",
+                "description": "Get loan api details to load",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 5,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "select * from vw_loan_detail_by_time_stamp\norder by key_value , off_set asc",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach1",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "LOOKUP_LOAN_DETAILS",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('LOOKUP_LOAN_DETAILS').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "EXEC_PL_CHILD_PROCESS_LOAN_DETAILS_BY_TIME_STAMP",
+                            "description": "Call child pipeline to load the loans data",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "PL_CHILD_TMO_API_DELTA_LOAD_DEV",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true,
+                                "parameters": {
+                                    "api_rk": {
+                                        "value": "@item().api_rk",
+                                        "type": "Expression"
+                                    },
+                                    "api_url": {
+                                        "value": "@item().api_url",
+                                        "type": "Expression"
+                                    },
+                                    "token": {
+                                        "value": "@item().token",
+                                        "type": "Expression"
+                                    },
+                                    "dbase_name": {
+                                        "value": "@item().dbase_name",
+                                        "type": "Expression"
+                                    },
+                                    "page_size": {
+                                        "value": "@item().page_size",
+                                        "type": "Expression"
+                                    },
+                                    "api_key_value": {
+                                        "value": "@item().key_value",
+                                        "type": "Expression"
+                                    },
+                                    "last_run_successfully": {
+                                        "value": "@item().last_run_successfully",
+                                        "type": "Expression"
+                                    },
+                                    "api_override_parameter_value": {
+                                        "value": "@item().api_override_parameter_value",
+                                        "type": "Expression"
+                                    },
+                                    "off_set": {
+                                        "value": "@item().off_set",
+                                        "type": "Expression"
+                                    },
+                                    "batch_id": {
+                                        "value": "@item().batch_id",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "EXEC_PL_CHILD_REFRESH_FCT_DATA",
+                "description": "Call child pipeline to refresh the loans fact data",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "ForEach1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "PL_CHILD_REFRESH_FCT_DATA_DEV",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "api_code": {
+                            "value": "GET_LOAN_BY_TS",
+                            "type": "Expression"
+                        },
+                        "requested_by": {
+                            "value": "@pipeline().Pipeline",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "folder": {
+            "name": "CAL_DEV"
+        },
+        "annotations": [],
+        "lastPublishTime": "2025-04-16T09:07:18Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_AZURE_SQL_CAL_DEV')]",
+        "[concat(variables('factoryId'), '/pipelines/PL_CHILD_REFRESH_FCT_DATA_DEV')]",
+        "[concat(variables('factoryId'), '/pipelines/PL_CHILD_TMO_API_DELTA_LOAD_DEV')]"
+    ]
+}

@@ -1,0 +1,32 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_AZURE_SQL_CAL_DEV_DYN')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_AzureSql_CAL_DEV",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "stg_obj_name": {
+                "type": "string"
+            }
+        },
+        "folder": {
+            "name": "DS_DEV"
+        },
+        "annotations": [],
+        "type": "AzureSqlTable",
+        "schema": [],
+        "typeProperties": {
+            "schema": "dbo",
+            "table": {
+                "value": "@dataset().stg_obj_name",
+                "type": "Expression"
+            }
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_AzureSql_CAL_DEV')]"
+    ]
+}

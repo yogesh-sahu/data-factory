@@ -1,0 +1,166 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "description": "Load the data using get lender portfolio by lender code API",
+        "activities": [
+            {
+                "name": "LOOKUP_LENDER_PORTFOLIO_DETAILS",
+                "description": "Get lender portfolio api details to load",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 5,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": {
+                            "value": "@concat('SELECT * FROM ',pipeline().parameters.VIEW_NAME)",
+                            "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach1",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "LOOKUP_LENDER_PORTFOLIO_DETAILS",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('LOOKUP_LENDER_PORTFOLIO_DETAILS').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "EXEC_PL_CHILD_PROCESS_LENDER_PORTFOLIO_DETAILS",
+                            "description": "Call child pipeline to load lender portfolio data",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "PL_CHILD_TMO_API_FULL_LOAD WEB",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true,
+                                "parameters": {
+                                    "api_rk": {
+                                        "value": "@item().api_rk",
+                                        "type": "Expression"
+                                    },
+                                    "api_url": {
+                                        "value": "@item().api_url",
+                                        "type": "Expression"
+                                    },
+                                    "token": {
+                                        "value": "@item().token",
+                                        "type": "Expression"
+                                    },
+                                    "dbase_name": {
+                                        "value": "@item().dbase_name",
+                                        "type": "Expression"
+                                    },
+                                    "api_key_value": {
+                                        "value": "@item().key_value",
+                                        "type": "Expression"
+                                    },
+                                    "last_run_successfully": {
+                                        "value": "@item().last_run_successfully",
+                                        "type": "Expression"
+                                    },
+                                    "api_override_parameter_value": {
+                                        "value": "@item().api_override_parameter_value",
+                                        "type": "Expression"
+                                    },
+                                    "batch_id": {
+                                        "value": "@item().batch_id",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "EXEC_PL_CHILD_REFRESH_FCT_DATA",
+                "description": "Call child pipeline to refresh the lender portfolio fact data",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "ForEach1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "PL_CHILD_REFRESH_FCT_DATA",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "api_code": {
+                            "value": "GET_LENDER_PORTFOLIO",
+                            "type": "Expression"
+                        },
+                        "requested_by": {
+                            "value": "@pipeline().Pipeline",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "parameters": {
+            "VIEW_NAME": {
+                "type": "string"
+            }
+        },
+        "folder": {
+            "name": "CAL_PROD"
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-02-09T08:12:30Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_AZURE_SQL_CAL')]",
+        "[concat(variables('factoryId'), '/pipelines/PL_CHILD_REFRESH_FCT_DATA')]",
+        "[concat(variables('factoryId'), '/pipelines/PL_CHILD_TMO_API_FULL_LOAD WEB')]"
+    ]
+}

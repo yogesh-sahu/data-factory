@@ -1,0 +1,22 @@
+{
+    "name": "[concat(parameters('factoryName'), '/Loan_history_abhi_test')]",
+    "type": "Microsoft.DataFactory/factories/linkedServices",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "annotations": [],
+        "type": "AzureSqlDatabase",
+        "typeProperties": {
+            "server": "[parameters('Loan_history_abhi_test_properties_typeProperties_server')]",
+            "database": "[parameters('Loan_history_abhi_test_properties_typeProperties_database')]",
+            "encrypt": "mandatory",
+            "trustServerCertificate": false,
+            "authenticationType": "SQL",
+            "userName": "[parameters('Loan_history_abhi_test_properties_typeProperties_userName')]",
+            "password": {
+                "type": "SecureString",
+                "value": "[parameters('Loan_history_abhi_test_password')]"
+            }
+        }
+    },
+    "dependsOn": []
+}

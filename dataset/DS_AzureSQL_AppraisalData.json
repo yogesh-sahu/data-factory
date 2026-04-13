@@ -1,0 +1,55 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_AzureSQL_AppraisalData')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "AzureSqlDatabase1",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "AzureSqlTable",
+        "schema": [
+            {
+                "name": "ID",
+                "type": "int",
+                "precision": 10
+            },
+            {
+                "name": "External_Id",
+                "type": "varchar"
+            },
+            {
+                "name": "Payload",
+                "type": "nvarchar"
+            },
+            {
+                "name": "Error_Message",
+                "type": "varchar"
+            },
+            {
+                "name": "CreatedAt",
+                "type": "datetime",
+                "precision": 23,
+                "scale": 3
+            },
+            {
+                "name": "SyncStatus",
+                "type": "varchar"
+            },
+            {
+                "name": "SyncedAt",
+                "type": "datetime",
+                "precision": 23,
+                "scale": 3
+            }
+        ],
+        "typeProperties": {
+            "schema": "abhi",
+            "table": "ai_appraisal_data"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+    ]
+}

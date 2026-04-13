@@ -1,0 +1,40 @@
+{
+    "name": "[concat(parameters('factoryName'), '/TGR_SF_DATA_FULL')]",
+    "type": "Microsoft.DataFactory/factories/triggers",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "description": "Trigger to pull the Salesforce data",
+        "annotations": [],
+        "runtimeState": "Started",
+        "pipelines": [
+            {
+                "pipelineReference": {
+                    "referenceName": "PL_LOAD_SF_DATA_FULL",
+                    "type": "PipelineReference"
+                },
+                "parameters": {}
+            }
+        ],
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+            "recurrence": {
+                "frequency": "Day",
+                "interval": 1,
+                "startTime": "2026-03-20T12:00:00",
+                "endTime": "2027-01-02T23:59:00",
+                "timeZone": "India Standard Time",
+                "schedule": {
+                    "minutes": [
+                        30
+                    ],
+                    "hours": [
+                        12
+                    ]
+                }
+            }
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/pipelines/PL_LOAD_SF_DATA_FULL')]"
+    ]
+}

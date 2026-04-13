@@ -1,0 +1,145 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_Test_SQL_to_Salesforce')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "CopyToSalesforce",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT \n    ACH_BatchNumber, \n    ACH_TraceNumber, \n    ACH_TransNumber,\n    CAST(NEWID() AS VARCHAR(50)) AS External_Id\nFROM abhi.sf_test \nWHERE SyncStatus = 'pending'",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "SalesforceV2Sink",
+                        "writeBatchSize": 100000,
+                        "writeBehavior": "upsert",
+                        "externalIdFieldName": "External_Id__c",
+                        "ignoreNullValues": false
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "mappings": [
+                            {
+                                "source": {
+                                    "name": "ACH_BatchNumber",
+                                    "type": "String",
+                                    "physicalType": "nvarchar"
+                                },
+                                "sink": {
+                                    "name": "ACH_BatchNumber__c",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "ACH_TraceNumber",
+                                    "type": "String",
+                                    "physicalType": "nvarchar"
+                                },
+                                "sink": {
+                                    "name": "ACH_TraceNumber__c",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "ACH_TransNumber",
+                                    "type": "String",
+                                    "physicalType": "nvarchar"
+                                },
+                                "sink": {
+                                    "name": "ACH_TransNumber__c",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "External_Id"
+                                },
+                                "sink": {
+                                    "name": "External_Id__c",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                }
+                            }
+                        ],
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DS_AzureSQL_SfTest",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DS_Salesforce_ACHTransaction",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ]
+            },
+            {
+                "name": "MarkRecordsPushed",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "CopyToSalesforce",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "[[abhi].[sp_MarkRecordsPushed]"
+                },
+                "linkedServiceName": {
+                    "referenceName": "AzureSqlDatabase1",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-01-09T14:14:50Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_AzureSQL_SfTest')]",
+        "[concat(variables('factoryId'), '/datasets/DS_Salesforce_ACHTransaction')]",
+        "[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+    ]
+}

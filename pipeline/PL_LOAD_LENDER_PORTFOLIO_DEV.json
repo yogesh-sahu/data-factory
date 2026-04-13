@@ -1,0 +1,39 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_LOAD_LENDER_PORTFOLIO_DEV')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "EXEC_PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL_DEV",
+                "type": "ExecutePipeline",
+                "dependsOn": [],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL_DEV",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "VIEW_NAME": "vw_lender_portfolio"
+                    }
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "folder": {
+            "name": "CAL_DEV"
+        },
+        "annotations": [],
+        "lastPublishTime": "2025-04-23T09:39:04Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/pipelines/PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL_DEV')]"
+    ]
+}

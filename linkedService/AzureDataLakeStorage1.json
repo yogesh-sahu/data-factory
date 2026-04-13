@@ -1,0 +1,17 @@
+{
+    "name": "[concat(parameters('factoryName'), '/AzureDataLakeStorage1')]",
+    "type": "Microsoft.DataFactory/factories/linkedServices",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "annotations": [],
+        "type": "AzureBlobFS",
+        "typeProperties": {
+            "url": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]",
+            "accountKey": {
+                "type": "SecureString",
+                "value": "[parameters('AzureDataLakeStorage1_accountKey')]"
+            }
+        }
+    },
+    "dependsOn": []
+}

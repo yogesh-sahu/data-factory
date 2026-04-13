@@ -1,0 +1,42 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_HOUSE_KEEPING')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "description": "This pipeline calls stored procedure and rebuilds the indexes on every Sunday and 1st of every month.",
+        "activities": [
+            {
+                "name": "SP_CALL_HOUSE_KEEPING",
+                "description": "Procedure to rebuild the indexes",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 5,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "dbo.pr_house_keeping"
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "folder": {
+            "name": "CAL_PROD"
+        },
+        "annotations": [],
+        "lastPublishTime": "2025-06-14T06:02:34Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_AzureSql_CAL')]"
+    ]
+}

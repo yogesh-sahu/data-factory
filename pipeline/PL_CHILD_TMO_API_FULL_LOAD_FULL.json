@@ -1,0 +1,241 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_CHILD_TMO_API_FULL_LOAD_FULL')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "SP_CALL_CURATE_API_DATA_SUCCESS",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "dbo.pr_load_lender_portfolio_detail_full",
+                    "storedProcedureParameters": {
+                        "input_data": {
+                            "value": {
+                                "value": "@concat('{\"REQUESTED_BY\":\"', pipeline().TriggeredByPipelineName, '\"}')",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_FULL",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "SP_CALL_CURATE_API_DATA_FAIL",
+                "type": "SqlServerStoredProcedure",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "dbo.pr_curate_api_data_LP_full",
+                    "storedProcedureParameters": {
+                        "ApiRk": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_rk",
+                                "type": "Expression"
+                            },
+                            "type": "Int32"
+                        },
+                        "APIRequest": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_url",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "APIResponse": {
+                            "value": {
+                                "value": "@concat(pipeline().parameters.Directory, '/', formatDateTime(utcNow(), 'yyyyMMdd'), '/',pipeline().parameters.api_key_value,'.json')",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "IsError": {
+                            "value": "1",
+                            "type": "Int16"
+                        },
+                        "RequestedBy": {
+                            "value": {
+                                "value": "@pipeline().TriggeredByPipelineName",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "Mode": {
+                            "value": "A",
+                            "type": "String"
+                        },
+                        "APIKeyValue": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_key_value",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "APIBatchId": {
+                            "value": {
+                                "value": "@pipeline().parameters.batch_id",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_FULL",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "GET_LENDER_PORTFFOLIO",
+                "type": "Copy",
+                "state": "Inactive",
+                "onInactiveMarkAs": "Succeeded",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "RestSource",
+                        "httpRequestTimeout": "00:01:40",
+                        "requestInterval": "00.00:00:00.010",
+                        "requestMethod": "GET",
+                        "additionalHeaders": {
+                            "Token": {
+                                "value": "@pipeline().parameters.token",
+                                "type": "Expression"
+                            },
+                            "Database": {
+                                "value": "@pipeline().parameters.dbase_name",
+                                "type": "Expression"
+                            }
+                        },
+                        "paginationRules": {
+                            "supportRFC5988": "true"
+                        }
+                    },
+                    "sink": {
+                        "type": "JsonSink",
+                        "storeSettings": {
+                            "type": "AzureBlobStorageWriteSettings"
+                        },
+                        "formatSettings": {
+                            "type": "JsonWriteSettings"
+                        }
+                    },
+                    "enableStaging": false
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DS_TMOLenderPortfolio_full",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "URL": {
+                                "value": "@pipeline().parameters.api_url",
+                                "type": "Expression"
+                            }
+                        }
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DS_JSON_FULL",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "FIleName": {
+                                "value": "@concat(pipeline().parameters.api_key_value,'.json')",
+                                "type": "Expression"
+                            },
+                            "Directory": {
+                                "value": "@concat(pipeline().parameters.Directory, '/', formatDateTime(utcNow(), 'yyyyMMdd'))",
+                                "type": "Expression"
+                            },
+                            "Container": {
+                                "value": "@pipeline().parameters.Container",
+                                "type": "Expression"
+                            }
+                        }
+                    }
+                ]
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "parameters": {
+            "api_rk": {
+                "type": "int"
+            },
+            "api_url": {
+                "type": "string"
+            },
+            "token": {
+                "type": "string"
+            },
+            "dbase_name": {
+                "type": "string"
+            },
+            "api_key_value": {
+                "type": "string"
+            },
+            "last_run_successfully": {
+                "type": "string"
+            },
+            "api_override_parameter_value": {
+                "type": "string"
+            },
+            "batch_id": {
+                "type": "string"
+            },
+            "FileName": {
+                "type": "string",
+                "defaultValue": "LenderPortfolio"
+            },
+            "Directory": {
+                "type": "string",
+                "defaultValue": "LenderPortfolio"
+            },
+            "Container": {
+                "type": "string",
+                "defaultValue": "lenderportfolio-fullsnapshot"
+            }
+        },
+        "folder": {
+            "name": "PROD_FULL"
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-03-22T11:34:10Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_AzureSql_CAL_FULL')]",
+        "[concat(variables('factoryId'), '/datasets/DS_TMOLenderPortfolio_full')]",
+        "[concat(variables('factoryId'), '/datasets/DS_JSON_FULL')]"
+    ]
+}

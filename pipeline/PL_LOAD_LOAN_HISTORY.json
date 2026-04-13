@@ -1,0 +1,516 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_LOAD_LOAN_HISTORY')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "Lookup1",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT DISTINCT account_no FROM dim_loan",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach1",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "Lookup1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('Lookup1').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "Copy data1",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "RestSource",
+                                    "additionalColumns": [
+                                        {
+                                            "name": "account_no",
+                                            "value": {
+                                                "value": "@item().account_no",
+                                                "type": "Expression"
+                                            }
+                                        }
+                                    ],
+                                    "httpRequestTimeout": "00:01:40",
+                                    "requestInterval": "00.00:00:00.010",
+                                    "requestMethod": "GET",
+                                    "additionalHeaders": {
+                                        "Token": "9BD8E421EF0D467F8784C4B74A3B65CF",
+                                        "Database": "001-7777-000-Capital Asset Lending"
+                                    },
+                                    "paginationRules": {
+                                        "supportRFC5988": "true"
+                                    }
+                                },
+                                "sink": {
+                                    "type": "AzureSqlSink",
+                                    "writeBehavior": "insert",
+                                    "sqlWriterUseTableLock": false,
+                                    "tableOption": "autoCreate",
+                                    "disableMetricsCollection": false
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "mappings": [
+                                        {
+                                            "source": {
+                                                "path": "[['__type']"
+                                            },
+                                            "sink": {
+                                                "name": "__type",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ACH_BatchNumber']"
+                                            },
+                                            "sink": {
+                                                "name": "ACH_BatchNumber",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ACH_TraceNumber']"
+                                            },
+                                            "sink": {
+                                                "name": "ACH_TraceNumber",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ACH_TransNumber']"
+                                            },
+                                            "sink": {
+                                                "name": "ACH_TransNumber",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ACH_Transmission_DateTime']"
+                                            },
+                                            "sink": {
+                                                "name": "ACH_Transmission_DateTime",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['DateDue']"
+                                            },
+                                            "sink": {
+                                                "name": "DateDue",
+                                                "type": "DateTime"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['DateRec']"
+                                            },
+                                            "sink": {
+                                                "name": "DateRec",
+                                                "type": "DateTime"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['GroupRecID']"
+                                            },
+                                            "sink": {
+                                                "name": "GroupRecID",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['LateCharge']"
+                                            },
+                                            "sink": {
+                                                "name": "LateCharge",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['LoanAccount']"
+                                            },
+                                            "sink": {
+                                                "name": "LoanAccount",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['LoanBalance']"
+                                            },
+                                            "sink": {
+                                                "name": "LoanBalance",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['LoanRecID']"
+                                            },
+                                            "sink": {
+                                                "name": "LoanRecID",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['NSFSourceRecID']"
+                                            },
+                                            "sink": {
+                                                "name": "NSFSourceRecID",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['Notes']"
+                                            },
+                                            "sink": {
+                                                "name": "Notes",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['PaidTo']"
+                                            },
+                                            "sink": {
+                                                "name": "PaidTo",
+                                                "type": "DateTime"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['PayMethod']"
+                                            },
+                                            "sink": {
+                                                "name": "PayMethod",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['RecID']"
+                                            },
+                                            "sink": {
+                                                "name": "RecID",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['Reference']"
+                                            },
+                                            "sink": {
+                                                "name": "Reference",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['SourceApp']"
+                                            },
+                                            "sink": {
+                                                "name": "SourceApp",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['SourceTyp']"
+                                            },
+                                            "sink": {
+                                                "name": "SourceTyp",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['SysCreatedBy']"
+                                            },
+                                            "sink": {
+                                                "name": "SysCreatedBy",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['SysCreatedDate']"
+                                            },
+                                            "sink": {
+                                                "name": "SysCreatedDate",
+                                                "type": "DateTime"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToBrokerFee']"
+                                            },
+                                            "sink": {
+                                                "name": "ToBrokerFee",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToChargesInt']"
+                                            },
+                                            "sink": {
+                                                "name": "ToChargesInt",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToChargesPrin']"
+                                            },
+                                            "sink": {
+                                                "name": "ToChargesPrin",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToCurrentBill']"
+                                            },
+                                            "sink": {
+                                                "name": "ToCurrentBill",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToDefaultInterest']"
+                                            },
+                                            "sink": {
+                                                "name": "ToDefaultInterest",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToImpound']"
+                                            },
+                                            "sink": {
+                                                "name": "ToImpound",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToInterest']"
+                                            },
+                                            "sink": {
+                                                "name": "ToInterest",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToLateCharge']"
+                                            },
+                                            "sink": {
+                                                "name": "ToLateCharge",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToLenderFee']"
+                                            },
+                                            "sink": {
+                                                "name": "ToLenderFee",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToOtherPayments']"
+                                            },
+                                            "sink": {
+                                                "name": "ToOtherPayments",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToOtherTaxFree']"
+                                            },
+                                            "sink": {
+                                                "name": "ToOtherTaxFree",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToOtherTaxable']"
+                                            },
+                                            "sink": {
+                                                "name": "ToOtherTaxable",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToPastDue']"
+                                            },
+                                            "sink": {
+                                                "name": "ToPastDue",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToPrepay']"
+                                            },
+                                            "sink": {
+                                                "name": "ToPrepay",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToPrincipal']"
+                                            },
+                                            "sink": {
+                                                "name": "ToPrincipal",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToReserve']"
+                                            },
+                                            "sink": {
+                                                "name": "ToReserve",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToUnearnedDiscount']"
+                                            },
+                                            "sink": {
+                                                "name": "ToUnearnedDiscount",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['ToUnpaidInterest']"
+                                            },
+                                            "sink": {
+                                                "name": "ToUnpaidInterest",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "[['TotalAmount']"
+                                            },
+                                            "sink": {
+                                                "name": "TotalAmount",
+                                                "type": "Double"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "path": "$['account_no']"
+                                            },
+                                            "sink": {
+                                                "name": "account_no",
+                                                "type": "String"
+                                            }
+                                        }
+                                    ],
+                                    "collectionReference": "$['Data']"
+                                }
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "RestResource2",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "relativeUrl": "@concat('GetLoanHistory/', item().account_no)"
+                                    }
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "DS_Abhi_loanhistory",
+                                    "type": "DatasetReference",
+                                    "parameters": {}
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "folder": {
+            "name": "Analysis"
+        },
+        "annotations": [],
+        "lastPublishTime": "2025-04-15T06:15:14Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_AZURE_SQL_CAL')]",
+        "[concat(variables('factoryId'), '/datasets/RestResource2')]",
+        "[concat(variables('factoryId'), '/datasets/DS_Abhi_loanhistory')]"
+    ]
+}

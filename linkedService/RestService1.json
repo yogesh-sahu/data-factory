@@ -1,0 +1,21 @@
+{
+    "name": "[concat(parameters('factoryName'), '/RestService1')]",
+    "type": "Microsoft.DataFactory/factories/linkedServices",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "annotations": [],
+        "type": "RestService",
+        "typeProperties": {
+            "url": "[parameters('RestService1_properties_typeProperties_url')]",
+            "enableServerCertificateValidation": true,
+            "authenticationType": "OAuth2ClientCredential",
+            "clientId": "[parameters('RestService1_properties_typeProperties_clientId')]",
+            "clientSecret": {
+                "type": "SecureString",
+                "value": "[parameters('RestService1_clientSecret')]"
+            },
+            "tokenEndpoint": "https://opponolending.my.salesforce.com/services/oauth2/token"
+        }
+    },
+    "dependsOn": []
+}

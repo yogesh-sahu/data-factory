@@ -1,0 +1,106 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_LOAD_ADDITIONAL_INFO_DEVFULL')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "LOOKUP_LOAN_ADDITIONAL_INFO",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "select top 5 * from vw_open_loan_account_additional_info_full\norder by is_last_row desc",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach1",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "LOOKUP_LOAN_ADDITIONAL_INFO",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('LOOKUP_LOAN_ADDITIONAL_INFO').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": false,
+                    "batchCount": 10,
+                    "activities": [
+                        {
+                            "name": "EXEC_PL_CHILD_PROCESS_LOAN_ADDITINAL_INDO",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "PL_CHILD_TMO_API_FULL_LOAD WEB_DEVFULL",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": false,
+                                "parameters": {
+                                    "api_rk": 8,
+                                    "api_url": {
+                                        "value": "@item().api_url",
+                                        "type": "Expression"
+                                    },
+                                    "token": "9BD8E421EF0D467F8784C4B74A3B65CF",
+                                    "dbase_name": "001-7777-000-Capital Asset Lending_CSB02_SB-CL",
+                                    "api_key_value": {
+                                        "value": "@item().key_value",
+                                        "type": "Expression"
+                                    },
+                                    "last_run_successfully": "F",
+                                    "api_override_parameter_value": "{}",
+                                    "batch_id": {
+                                        "value": "@utcNow()",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "folder": {
+            "name": "DEV_FULL"
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-03-27T11:53:43Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_AZURE_SQL_CAL_DEV')]",
+        "[concat(variables('factoryId'), '/pipelines/PL_CHILD_TMO_API_FULL_LOAD WEB_DEVFULL')]"
+    ]
+}

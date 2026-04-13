@@ -1,0 +1,22 @@
+{
+    "name": "[concat(parameters('factoryName'), '/AzureSqlDatabase_dev_test_stg')]",
+    "type": "Microsoft.DataFactory/factories/linkedServices",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "annotations": [],
+        "type": "AzureSqlDatabase",
+        "typeProperties": {
+            "server": "[parameters('AzureSqlDatabase_dev_test_stg_properties_typeProperties_server')]",
+            "database": "[parameters('AzureSqlDatabase_dev_test_stg_properties_typeProperties_database')]",
+            "encrypt": "mandatory",
+            "trustServerCertificate": false,
+            "authenticationType": "SQL",
+            "userName": "[parameters('AzureSqlDatabase_dev_test_stg_properties_typeProperties_userName')]",
+            "password": {
+                "type": "SecureString",
+                "value": "[parameters('AzureSqlDatabase_dev_test_stg_password')]"
+            }
+        }
+    },
+    "dependsOn": []
+}

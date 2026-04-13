@@ -1,0 +1,385 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_JSON_BY_TS_RAW')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_ADDFUNDING",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "Json",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobStorageLocation",
+                "folderPath": "raw/file_date=20260218",
+                "container": "snapshots"
+            }
+        },
+        "schema": {
+            "type": "object",
+            "properties": {
+                "Data": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "__type": {
+                                "type": "string"
+                            },
+                            "Account": {
+                                "type": "string"
+                            },
+                            "BorrowerRecID": {
+                                "type": "string"
+                            },
+                            "ByLastName": {
+                                "type": "string"
+                            },
+                            "CDFIReporting": {
+                                "type": "string"
+                            },
+                            "DaysLate": {
+                                "type": "integer"
+                            },
+                            "EmailAddress": {
+                                "type": "string"
+                            },
+                            "EmailFormat": {
+                                "type": "string"
+                            },
+                            "IsTemplate": {
+                                "type": "string"
+                            },
+                            "LOSLoanRecID": {
+                                "type": "string"
+                            },
+                            "Notes": {
+                                "type": "null"
+                            },
+                            "OrigVendorAccount": {
+                                "type": "string"
+                            },
+                            "PrimaryBorrower": {
+                                "type": "object",
+                                "properties": {
+                                    "Account": {
+                                        "type": "string"
+                                    },
+                                    "BorrowerRecID": {
+                                        "type": "string"
+                                    },
+                                    "City": {
+                                        "type": "string"
+                                    },
+                                    "CountryCode": {
+                                        "type": "string"
+                                    },
+                                    "DOB": {
+                                        "type": "string"
+                                    },
+                                    "DeliveryOptions": {
+                                        "type": "string"
+                                    },
+                                    "EmailAddress": {
+                                        "type": "string"
+                                    },
+                                    "EmailFormat": {
+                                        "type": "string"
+                                    },
+                                    "FirstName": {
+                                        "type": "string"
+                                    },
+                                    "FullName": {
+                                        "type": "string"
+                                    },
+                                    "LastName": {
+                                        "type": "string"
+                                    },
+                                    "LegalStructureType": {
+                                        "type": "string"
+                                    },
+                                    "MI": {
+                                        "type": "string"
+                                    },
+                                    "Notes": {
+                                        "type": "string"
+                                    },
+                                    "PhoneCell": {
+                                        "type": "string"
+                                    },
+                                    "PhoneFax": {
+                                        "type": "string"
+                                    },
+                                    "PhoneHome": {
+                                        "type": "string"
+                                    },
+                                    "PhoneMain": {
+                                        "type": "string"
+                                    },
+                                    "PhoneWork": {
+                                        "type": "string"
+                                    },
+                                    "PlaceOnHold": {
+                                        "type": "string"
+                                    },
+                                    "RecID": {
+                                        "type": "string"
+                                    },
+                                    "RolodexPrint": {
+                                        "type": "string"
+                                    },
+                                    "Salutation": {
+                                        "type": "string"
+                                    },
+                                    "SendLateNotices": {
+                                        "type": "string"
+                                    },
+                                    "SendPaymentReceipt": {
+                                        "type": "string"
+                                    },
+                                    "SendPaymentStatement": {
+                                        "type": "string"
+                                    },
+                                    "State": {
+                                        "type": "string"
+                                    },
+                                    "Street": {
+                                        "type": "string"
+                                    },
+                                    "TIN": {
+                                        "type": "string"
+                                    },
+                                    "TINType": {
+                                        "type": "string"
+                                    },
+                                    "ZipCode": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "RecID": {
+                                "type": "string"
+                            },
+                            "SortName": {
+                                "type": "string"
+                            },
+                            "SysTimeStamp": {
+                                "type": "string"
+                            },
+                            "WPC_PIN": {
+                                "type": "string"
+                            },
+                            "WPC_Publish": {
+                                "type": "string"
+                            },
+                            "ACH": {
+                                "type": "string"
+                            },
+                            "AggregateAppraisedValue": {
+                                "type": "string"
+                            },
+                            "AggregateSeniorLiens": {
+                                "type": "string"
+                            },
+                            "ApplyToImpound": {
+                                "type": "string"
+                            },
+                            "ApplyToOther": {
+                                "type": "string"
+                            },
+                            "ApplyToPI": {
+                                "type": "string"
+                            },
+                            "ApplyToReserve": {
+                                "type": "string"
+                            },
+                            "AppraisalDate": {
+                                "type": "string"
+                            },
+                            "BilledToDate": {
+                                "type": "null"
+                            },
+                            "BookingDate": {
+                                "type": "string"
+                            },
+                            "CON_ImpoundBalance": {
+                                "type": "null"
+                            },
+                            "CON_ReserveBalance": {
+                                "type": "null"
+                            },
+                            "CON_TrustBalance": {
+                                "type": "null"
+                            },
+                            "CalculatedLTV": {
+                                "type": "string"
+                            },
+                            "Categories": {
+                                "type": "string"
+                            },
+                            "ClosingDate": {
+                                "type": "string"
+                            },
+                            "CustomFields": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "Name": {
+                                            "type": "string"
+                                        },
+                                        "Tab": {
+                                            "type": "string"
+                                        },
+                                        "Value": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "DefaultRateUse": {
+                                "type": "null"
+                            },
+                            "EnableInsuranceTracking": {
+                                "type": "string"
+                            },
+                            "FirstPaymentDate": {
+                                "type": "string"
+                            },
+                            "GraceDaysMethod": {
+                                "type": "string"
+                            },
+                            "Hold": {
+                                "type": "string"
+                            },
+                            "ImpoundBalance": {
+                                "type": "string"
+                            },
+                            "InterestPaidTo": {
+                                "type": "string"
+                            },
+                            "LateChargeDays": {
+                                "type": "string"
+                            },
+                            "LegalStructure": {
+                                "type": "string"
+                            },
+                            "LoanCode": {
+                                "type": "string"
+                            },
+                            "LoanOfficer": {
+                                "type": "string"
+                            },
+                            "LoanType": {
+                                "type": "string"
+                            },
+                            "MaturityDate": {
+                                "type": "string"
+                            },
+                            "NextRevision": {
+                                "type": "string"
+                            },
+                            "NoteRate": {
+                                "type": "string"
+                            },
+                            "OriginalBalance": {
+                                "type": "string"
+                            },
+                            "PaidOffDate": {
+                                "type": "string"
+                            },
+                            "PaymentDueDate": {
+                                "type": "string"
+                            },
+                            "PaymentFrequency": {
+                                "type": "string"
+                            },
+                            "PrincipalBalance": {
+                                "type": "string"
+                            },
+                            "Priority": {
+                                "type": "string"
+                            },
+                            "PropertyAPN": {
+                                "type": "string"
+                            },
+                            "PropertyCity": {
+                                "type": "string"
+                            },
+                            "PropertyCounty": {
+                                "type": "string"
+                            },
+                            "PropertyDescription": {
+                                "type": "string"
+                            },
+                            "PropertyLTV": {
+                                "type": "string"
+                            },
+                            "PropertyOccupancy": {
+                                "type": "string"
+                            },
+                            "PropertyState": {
+                                "type": "string"
+                            },
+                            "PropertyStreet": {
+                                "type": "string"
+                            },
+                            "PropertyType": {
+                                "type": "string"
+                            },
+                            "PropertyZip": {
+                                "type": "string"
+                            },
+                            "PurchaseDate": {
+                                "type": "string"
+                            },
+                            "RateType": {
+                                "type": "string"
+                            },
+                            "RegularPayment": {
+                                "type": "string"
+                            },
+                            "ReserveBalance": {
+                                "type": "string"
+                            },
+                            "SoldRate": {
+                                "type": "string"
+                            },
+                            "TermLeft": {
+                                "type": "string"
+                            },
+                            "TrustBalance": {
+                                "type": "string"
+                            },
+                            "UnearnedDiscount": {
+                                "type": "string"
+                            },
+                            "UnpaidCharges": {
+                                "type": "string"
+                            },
+                            "UnpaidInterest": {
+                                "type": "string"
+                            },
+                            "UnpaidLateCharges": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "ErrorMessage": {
+                    "type": "string"
+                },
+                "ErrorNumber": {
+                    "type": "integer"
+                },
+                "Status": {
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_ADDFUNDING')]"
+    ]
+}

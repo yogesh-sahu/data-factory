@@ -1,0 +1,20 @@
+{
+    "name": "[concat(parameters('factoryName'), '/Oppono_Salesforce_full')]",
+    "type": "Microsoft.DataFactory/factories/linkedServices",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "annotations": [],
+        "type": "SalesforceV2",
+        "typeProperties": {
+            "environmentUrl": "[parameters('Oppono_Salesforce_full_properties_typeProperties_environmentUrl')]",
+            "clientId": "[parameters('Oppono_Salesforce_full_properties_typeProperties_clientId')]",
+            "clientSecret": {
+                "type": "SecureString",
+                "value": "[parameters('Oppono_Salesforce_full_clientSecret')]"
+            },
+            "apiVersion": "54.0",
+            "authenticationType": "OAuth2ClientCredential"
+        }
+    },
+    "dependsOn": []
+}

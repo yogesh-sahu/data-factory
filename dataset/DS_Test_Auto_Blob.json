@@ -1,0 +1,39 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_Test_Auto_Blob')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_Test_Auto_Blob",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "Excel",
+        "typeProperties": {
+            "sheetName": "Sheet1",
+            "location": {
+                "type": "AzureBlobStorageLocation",
+                "fileName": "Emp_Data.xlsx",
+                "container": "addfunding"
+            },
+            "firstRowAsHeader": true
+        },
+        "schema": [
+            {
+                "type": "String"
+            },
+            {
+                "type": "String"
+            },
+            {
+                "type": "String"
+            },
+            {
+                "type": "String"
+            }
+        ]
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_Test_Auto_Blob')]"
+    ]
+}

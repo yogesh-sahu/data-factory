@@ -1,0 +1,40 @@
+{
+    "name": "[concat(parameters('factoryName'), '/TGR_HOUSE_KEEPING')]",
+    "type": "Microsoft.DataFactory/factories/triggers",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "description": "Trigger to rebuild the indexes",
+        "annotations": [],
+        "runtimeState": "Started",
+        "pipelines": [
+            {
+                "pipelineReference": {
+                    "referenceName": "PL_HOUSE_KEEPING",
+                    "type": "PipelineReference"
+                },
+                "parameters": {}
+            }
+        ],
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+            "recurrence": {
+                "frequency": "Day",
+                "interval": 1,
+                "startTime": "2025-06-12T01:00:00",
+                "endTime": "2026-12-31T23:59:59",
+                "timeZone": "Central Standard Time",
+                "schedule": {
+                    "minutes": [
+                        0
+                    ],
+                    "hours": [
+                        6
+                    ]
+                }
+            }
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/pipelines/PL_HOUSE_KEEPING')]"
+    ]
+}

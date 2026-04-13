@@ -1,0 +1,146 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_AppraisalData_to_Salesforce')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "CopyAppraisalToSalesforce",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT \n    External_Id,\n    Payload,\n    Error_Message,\n    CONCAT(External_Id, '-', FORMAT(CreatedAt, 'yyyyMMddHHmmss')) AS Request_Received_At\nFROM abhi.ai_appraisal_data\nWHERE SyncStatus = 'pending'",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "sink": {
+                        "type": "SalesforceV2Sink",
+                        "writeBatchSize": 100000,
+                        "writeBehavior": "upsert",
+                        "externalIdFieldName": "External_Id__c",
+                        "ignoreNullValues": false
+                    },
+                    "enableStaging": false,
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "mappings": [
+                            {
+                                "source": {
+                                    "name": "External_Id",
+                                    "type": "String",
+                                    "physicalType": "varchar"
+                                },
+                                "sink": {
+                                    "name": "External_Id__c",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Payload",
+                                    "type": "String",
+                                    "physicalType": "nvarchar"
+                                },
+                                "sink": {
+                                    "name": "Payload__c",
+                                    "type": "String",
+                                    "physicalType": "textarea"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Error_Message",
+                                    "type": "String",
+                                    "physicalType": "varchar"
+                                },
+                                "sink": {
+                                    "name": "Error_Message__c",
+                                    "type": "String",
+                                    "physicalType": "string"
+                                }
+                            },
+                            {
+                                "source": {
+                                    "name": "Request_Received_At",
+                                    "type": "String",
+                                    "physicalType": "nvarchar"
+                                },
+                                "sink": {
+                                    "name": "Request_Received_At__c",
+                                    "physicalType": "string"
+                                }
+                            }
+                        ],
+                        "typeConversion": true,
+                        "typeConversionSettings": {
+                            "allowDataTruncation": true,
+                            "treatBooleanAsNumber": false
+                        }
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DS_AzureSQL_AppraisalData",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DS_Salesforce_AppraisalResponse",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    }
+                ]
+            },
+            {
+                "name": "MarkRecordsPushed",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "CopyAppraisalToSalesforce",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "[[abhi].[sp_MarkAppraisalRecordsPushed]"
+                },
+                "linkedServiceName": {
+                    "referenceName": "AzureSqlDatabase1",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-03-27T18:05:42Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_AzureSQL_AppraisalData')]",
+        "[concat(variables('factoryId'), '/datasets/DS_Salesforce_AppraisalResponse')]",
+        "[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+    ]
+}

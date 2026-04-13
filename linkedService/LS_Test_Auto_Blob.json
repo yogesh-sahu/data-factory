@@ -1,0 +1,13 @@
+{
+    "name": "[concat(parameters('factoryName'), '/LS_Test_Auto_Blob')]",
+    "type": "Microsoft.DataFactory/factories/linkedServices",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "annotations": [],
+        "type": "AzureBlobStorage",
+        "typeProperties": {
+            "connectionString": "[parameters('LS_Test_Auto_Blob_connectionString')]"
+        }
+    },
+    "dependsOn": []
+}

@@ -1,0 +1,24 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_AZURE_SQL_CAL_DEV')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_AzureSql_CAL_DEV",
+            "type": "LinkedServiceReference"
+        },
+        "folder": {
+            "name": "DS_DEV"
+        },
+        "annotations": [],
+        "type": "AzureSqlTable",
+        "schema": [],
+        "typeProperties": {
+            "schema": "dbo",
+            "table": "stg_fund_adjustment"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_AzureSql_CAL_DEV')]"
+    ]
+}

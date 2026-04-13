@@ -1,0 +1,365 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_Prod')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_Prod",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "AzureSqlTable",
+        "schema": [
+            {
+                "name": "loan_rk",
+                "type": "bigint",
+                "precision": 19
+            },
+            {
+                "name": "loan_rec_id",
+                "type": "varchar"
+            },
+            {
+                "name": "los_loan_rec_id",
+                "type": "varchar"
+            },
+            {
+                "name": "borrower_rec_id",
+                "type": "varchar"
+            },
+            {
+                "name": "account_no",
+                "type": "varchar"
+            },
+            {
+                "name": "ach",
+                "type": "int",
+                "precision": 10
+            },
+            {
+                "name": "hold",
+                "type": "varchar"
+            },
+            {
+                "name": "customer_rk",
+                "type": "bigint",
+                "precision": 19
+            },
+            {
+                "name": "intrest_paid_to",
+                "type": "date"
+            },
+            {
+                "name": "payment_due_date",
+                "type": "date"
+            },
+            {
+                "name": "payment_frequency",
+                "type": "varchar"
+            },
+            {
+                "name": "regular_payment",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "apply_to_pi",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "apply_to_reserve",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "apply_to_impound",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "apply_to_other",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "maturity_date",
+                "type": "date"
+            },
+            {
+                "name": "paid_off_date",
+                "type": "date"
+            },
+            {
+                "name": "note_rate",
+                "type": "decimal",
+                "precision": 9,
+                "scale": 4
+            },
+            {
+                "name": "sold_rate",
+                "type": "decimal",
+                "precision": 9,
+                "scale": 4
+            },
+            {
+                "name": "loan_priority",
+                "type": "int",
+                "precision": 10
+            },
+            {
+                "name": "principal_balance",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "trust_balance",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "impound_balance",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "reserve_balance",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "unpaid_late_charges",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "unpaid_charges",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "unpaid_intrest",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "street",
+                "type": "varchar"
+            },
+            {
+                "name": "city",
+                "type": "varchar"
+            },
+            {
+                "name": "region_rk",
+                "type": "int",
+                "precision": 10
+            },
+            {
+                "name": "state",
+                "type": "varchar"
+            },
+            {
+                "name": "zip_code",
+                "type": "varchar"
+            },
+            {
+                "name": "home_phone",
+                "type": "varchar"
+            },
+            {
+                "name": "work_phone",
+                "type": "varchar"
+            },
+            {
+                "name": "cell_phone",
+                "type": "varchar"
+            },
+            {
+                "name": "fax_phone",
+                "type": "varchar"
+            },
+            {
+                "name": "loan_type",
+                "type": "int",
+                "precision": 10
+            },
+            {
+                "name": "rate_type",
+                "type": "int",
+                "precision": 10
+            },
+            {
+                "name": "property_description",
+                "type": "varchar"
+            },
+            {
+                "name": "property_street",
+                "type": "varchar"
+            },
+            {
+                "name": "property_city",
+                "type": "varchar"
+            },
+            {
+                "name": "property_state",
+                "type": "varchar"
+            },
+            {
+                "name": "property_zip",
+                "type": "varchar"
+            },
+            {
+                "name": "property_country",
+                "type": "varchar"
+            },
+            {
+                "name": "property_type",
+                "type": "varchar"
+            },
+            {
+                "name": "property_occupancy",
+                "type": "varchar"
+            },
+            {
+                "name": "property_ltv",
+                "type": "decimal",
+                "precision": 9,
+                "scale": 4
+            },
+            {
+                "name": "property_apn",
+                "type": "varchar"
+            },
+            {
+                "name": "aggregate_appraised_value",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "calculated_ltv",
+                "type": "decimal",
+                "precision": 9,
+                "scale": 4
+            },
+            {
+                "name": "closing_date",
+                "type": "date"
+            },
+            {
+                "name": "first_payment_date",
+                "type": "date"
+            },
+            {
+                "name": "purhcase_date",
+                "type": "date"
+            },
+            {
+                "name": "booking_date",
+                "type": "date"
+            },
+            {
+                "name": "next_revision",
+                "type": "date"
+            },
+            {
+                "name": "original_balance_amt",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "unearned_discount",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "loan_code",
+                "type": "varchar"
+            },
+            {
+                "name": "appraisal_date",
+                "type": "date"
+            },
+            {
+                "name": "aggregate_senior_liens",
+                "type": "decimal",
+                "precision": 18,
+                "scale": 2
+            },
+            {
+                "name": "loan_officer",
+                "type": "varchar"
+            },
+            {
+                "name": "loan_status",
+                "type": "varchar"
+            },
+            {
+                "name": "account_status",
+                "type": "varchar"
+            },
+            {
+                "name": "loan_timestamp",
+                "type": "datetime",
+                "precision": 23,
+                "scale": 3
+            },
+            {
+                "name": "valid_flag",
+                "type": "varchar"
+            },
+            {
+                "name": "valid_from_date",
+                "type": "date"
+            },
+            {
+                "name": "valid_to_date",
+                "type": "date"
+            },
+            {
+                "name": "created_on",
+                "type": "datetime",
+                "precision": 23,
+                "scale": 3
+            },
+            {
+                "name": "created_by",
+                "type": "varchar"
+            },
+            {
+                "name": "mdm_checksum",
+                "type": "varchar"
+            },
+            {
+                "name": "batch_id",
+                "type": "varchar"
+            },
+            {
+                "name": "remarks",
+                "type": "varchar"
+            }
+        ],
+        "typeProperties": {
+            "schema": "dbo",
+            "table": "fct_lender_portfolio"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_Prod')]"
+    ]
+}

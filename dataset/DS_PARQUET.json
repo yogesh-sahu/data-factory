@@ -1,0 +1,40 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_PARQUET')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_ADDFUNDING",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "Directory": {
+                "type": "string"
+            },
+            "FileName": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "type": "Parquet",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobStorageLocation",
+                "fileName": {
+                    "value": "@dataset().FileName",
+                    "type": "Expression"
+                },
+                "folderPath": {
+                    "value": "@dataset().Directory",
+                    "type": "Expression"
+                },
+                "container": "snapshots"
+            },
+            "compressionCodec": "snappy"
+        },
+        "schema": []
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_ADDFUNDING')]"
+    ]
+}

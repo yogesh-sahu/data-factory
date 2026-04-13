@@ -1,0 +1,20 @@
+{
+    "name": "[concat(parameters('factoryName'), '/RestResource1')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "RestService1",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "RestResource",
+        "typeProperties": {
+            "relativeUrl": "/services/data/v54.0/analytics/reports/{reportId}/describe"
+        },
+        "schema": []
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/RestService1')]"
+    ]
+}

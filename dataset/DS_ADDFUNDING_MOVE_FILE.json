@@ -1,0 +1,39 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_ADDFUNDING_MOVE_FILE')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_ADDFUNDING",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "target_continer_name": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobStorageLocation",
+                "fileName": {
+                    "value": "@concat('Fund_Adjustment_',formatDateTime(utcNow(),'yyyy_MM_dd_HH_mm'))",
+                    "type": "Expression"
+                },
+                "container": {
+                    "value": "@dataset().target_continer_name",
+                    "type": "Expression"
+                }
+            },
+            "columnDelimiter": ",",
+            "escapeChar": "\\",
+            "firstRowAsHeader": true,
+            "quoteChar": "\""
+        },
+        "schema": []
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_ADDFUNDING')]"
+    ]
+}

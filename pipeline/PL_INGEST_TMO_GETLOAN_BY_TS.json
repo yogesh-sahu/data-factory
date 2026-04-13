@@ -1,0 +1,178 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_INGEST_TMO_GETLOAN_BY_TS')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "activities": [
+            {
+                "name": "Lookup1",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "WITH Years AS (\n    SELECT 2012 AS Year\n    UNION ALL\n    SELECT Year + 1\n    FROM Years\n    WHERE Year < 2026\n)\nSELECT\n    Year,\n    'https://api-ca.themortgageoffice.com/LSS.svc/GetLoansByTimestamp/'\n    + FORMAT(DATEFROMPARTS(Year, 1, 1), 'MM-dd-yyyy') + ' 00:00:00/'\n    + FORMAT(DATEFROMPARTS(Year, 12, 31), 'MM-dd-yyyy') + ' 23:59:59'\n    AS ApiUrl\nFROM Years\nOPTION (MAXRECURSION 100)",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL_DYN",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "stg_obj_name": "dim_loan"
+                        }
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach1",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "Set variable1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('Lookup1').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "Copy data1",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "RestSource",
+                                    "httpRequestTimeout": "00:12:00",
+                                    "requestInterval": "00.00:00:00.010",
+                                    "requestMethod": "GET",
+                                    "additionalHeaders": {
+                                        "Token": "9BD8E421EF0D467F8784C4B74A3B65CF",
+                                        "Database": "001-7777-000-Capital Asset Lending"
+                                    },
+                                    "paginationRules": {
+                                        "supportRFC5988": "true"
+                                    }
+                                },
+                                "sink": {
+                                    "type": "JsonSink",
+                                    "storeSettings": {
+                                        "type": "AzureBlobStorageWriteSettings"
+                                    },
+                                    "formatSettings": {
+                                        "type": "JsonWriteSettings"
+                                    }
+                                },
+                                "enableStaging": false
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "DS_LOAN_BYTS",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "URL": {
+                                            "value": "@item().ApiUrl",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "DS_JSON",
+                                    "type": "DatasetReference",
+                                    "parameters": {
+                                        "Directory": {
+                                            "value": "@concat(\n    pipeline().parameters.Directory,\n    '/file_date=',\n    formatDateTime(utcNow(),'yyyyMMdd')\n)",
+                                            "type": "Expression"
+                                        },
+                                        "FileName": {
+                                            "value": "@concat(\n    pipeline().parameters.FileName,\n    '_',\n    item().Year,\n    '_',\n    variables('runTimestamp'),\n    '.json'\n)\n",
+                                            "type": "Expression"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "Set variable1",
+                "type": "SetVariable",
+                "dependsOn": [
+                    {
+                        "activity": "Lookup1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "variableName": "runTimestamp",
+                    "value": {
+                        "value": "@formatDateTime(utcNow(),'yyyyMMddHHmmss')\n",
+                        "type": "Expression"
+                    }
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "parameters": {
+            "Directory": {
+                "type": "string",
+                "defaultValue": "raw"
+            },
+            "FileName": {
+                "type": "string",
+                "defaultValue": "LoanByTimeSTamp"
+            }
+        },
+        "variables": {
+            "runTimestamp": {
+                "type": "String"
+            }
+        },
+        "folder": {
+            "name": "CAL TESTS"
+        },
+        "annotations": [],
+        "lastPublishTime": "2026-02-23T11:49:20Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_AZURE_SQL_CAL_DYN')]",
+        "[concat(variables('factoryId'), '/datasets/DS_LOAN_BYTS')]",
+        "[concat(variables('factoryId'), '/datasets/DS_JSON')]"
+    ]
+}

@@ -1,0 +1,21 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_GetLoan_Trgt')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_GetLoan_Trgt",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "AzureSqlTable",
+        "schema": [],
+        "typeProperties": {
+            "schema": "dbo",
+            "table": "get_loan_amor_type"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_GetLoan_Trgt')]"
+    ]
+}

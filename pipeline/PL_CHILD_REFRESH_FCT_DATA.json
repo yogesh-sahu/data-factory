@@ -1,0 +1,66 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_CHILD_REFRESH_FCT_DATA')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "description": "Pipeline to refresh the fact tables data",
+        "activities": [
+            {
+                "name": "SP_REFRESH_FACT_DATA",
+                "description": "Call pr_curate_fct_data sp to refresh the fact data",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 3,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "storedProcedureName": "pr_curate_fct_data",
+                    "storedProcedureParameters": {
+                        "ApiCode": {
+                            "value": {
+                                "value": "@pipeline().parameters.api_code",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        },
+                        "RequestedBy": {
+                            "value": {
+                                "value": "@pipeline().parameters.requested_by",
+                                "type": "Expression"
+                            },
+                            "type": "String"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "parameters": {
+            "api_code": {
+                "type": "string"
+            },
+            "requested_by": {
+                "type": "string"
+            }
+        },
+        "folder": {
+            "name": "CAL_PROD"
+        },
+        "annotations": [],
+        "lastPublishTime": "2025-04-15T10:19:26Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_AzureSql_CAL')]"
+    ]
+}

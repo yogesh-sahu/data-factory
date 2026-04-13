@@ -1,0 +1,40 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_LOAD_FUND_ADJUSTMENT_LENDER_PORTFOLIO')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "description": "Refresh the portfolio of the lenders those are used in latest adjustment",
+        "activities": [
+            {
+                "name": "EXEC_PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL",
+                "type": "ExecutePipeline",
+                "dependsOn": [],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "VIEW_NAME": "vw_latest_fund_adjusted_lender"
+                    }
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "folder": {
+            "name": "CAL_PROD"
+        },
+        "annotations": [],
+        "lastPublishTime": "2025-10-29T12:03:29Z"
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/pipelines/PL_CHILD_LOAD_LENDER_PORTFOLIO_DETAIL')]"
+    ]
+}

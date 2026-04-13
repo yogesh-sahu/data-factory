@@ -1,0 +1,20 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_SALESFORCE_DEV')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_SALESFORCEF_DEV",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "SalesforceV2Object",
+        "schema": [],
+        "typeProperties": {
+            "objectApiName": "Account"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_SALESFORCEF_DEV')]"
+    ]
+}

@@ -1,0 +1,210 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_Abhi_loanhistory')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "Loan_history_abhi_test",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "AzureSqlTable",
+        "schema": [
+            {
+                "name": "__type",
+                "type": "nvarchar"
+            },
+            {
+                "name": "ACH_BatchNumber",
+                "type": "nvarchar"
+            },
+            {
+                "name": "ACH_TraceNumber",
+                "type": "nvarchar"
+            },
+            {
+                "name": "ACH_TransNumber",
+                "type": "nvarchar"
+            },
+            {
+                "name": "ACH_Transmission_DateTime",
+                "type": "nvarchar"
+            },
+            {
+                "name": "DateDue",
+                "type": "date"
+            },
+            {
+                "name": "DateRec",
+                "type": "date"
+            },
+            {
+                "name": "GroupRecID",
+                "type": "nvarchar"
+            },
+            {
+                "name": "LateCharge",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "LoanAccount",
+                "type": "nvarchar"
+            },
+            {
+                "name": "LoanBalance",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "LoanRecID",
+                "type": "nvarchar"
+            },
+            {
+                "name": "NSFSourceRecID",
+                "type": "nvarchar"
+            },
+            {
+                "name": "Notes",
+                "type": "nvarchar"
+            },
+            {
+                "name": "PaidTo",
+                "type": "date"
+            },
+            {
+                "name": "PayMethod",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "RecID",
+                "type": "nvarchar"
+            },
+            {
+                "name": "Reference",
+                "type": "nvarchar"
+            },
+            {
+                "name": "SourceApp",
+                "type": "nvarchar"
+            },
+            {
+                "name": "SourceTyp",
+                "type": "nvarchar"
+            },
+            {
+                "name": "SysCreatedBy",
+                "type": "nvarchar"
+            },
+            {
+                "name": "SysCreatedDate",
+                "type": "datetime",
+                "precision": 23,
+                "scale": 3
+            },
+            {
+                "name": "ToBrokerFee",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToChargesInt",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToChargesPrin",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToCurrentBill",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToDefaultInterest",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToImpound",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToInterest",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToLateCharge",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToLenderFee",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToOtherPayments",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToOtherTaxFree",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToOtherTaxable",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToPastDue",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToPrepay",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToPrincipal",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToReserve",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToUnearnedDiscount",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "ToUnpaidInterest",
+                "type": "float",
+                "precision": 15
+            },
+            {
+                "name": "TotalAmount",
+                "type": "float",
+                "precision": 15
+            }
+        ],
+        "typeProperties": {
+            "schema": "abhi",
+            "table": "loan_history_abhi_test"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/Loan_history_abhi_test')]"
+    ]
+}

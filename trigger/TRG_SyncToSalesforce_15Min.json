@@ -1,0 +1,32 @@
+{
+    "name": "[concat(parameters('factoryName'), '/TRG_SyncToSalesforce_15Min')]",
+    "type": "Microsoft.DataFactory/factories/triggers",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "annotations": [],
+        "runtimeState": "Started",
+        "pipeline": {
+            "pipelineReference": {
+                "referenceName": "PL_Test_SQL_to_Salesforce",
+                "type": "PipelineReference"
+            },
+            "parameters": {}
+        },
+        "type": "TumblingWindowTrigger",
+        "typeProperties": {
+            "frequency": "Minute",
+            "interval": 15,
+            "startTime": "2026-01-09T11:15:00Z",
+            "delay": "00:00:00",
+            "maxConcurrency": 1,
+            "retryPolicy": {
+                "count": 3,
+                "intervalInSeconds": 30
+            },
+            "dependsOn": []
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/pipelines/PL_Test_SQL_to_Salesforce')]"
+    ]
+}

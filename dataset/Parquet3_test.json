@@ -1,0 +1,3821 @@
+{
+    "name": "[concat(parameters('factoryName'), '/Parquet3_test')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "AzureBlobStorage_DEV",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "Parquet",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobStorageLocation",
+                "fileName": "Opportunity.parquet",
+                "folderPath": "Salesforce_full/20260306",
+                "container": "snapshots"
+            },
+            "compressionCodec": "snappy"
+        },
+        "schema": [
+            {
+                "name": "Id",
+                "type": "UTF8"
+            },
+            {
+                "name": "IsDeleted",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "AccountId",
+                "type": "UTF8"
+            },
+            {
+                "name": "RecordTypeId",
+                "type": "UTF8"
+            },
+            {
+                "name": "IsPrivate",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Name",
+                "type": "UTF8"
+            },
+            {
+                "name": "Description",
+                "type": "UTF8"
+            },
+            {
+                "name": "StageName",
+                "type": "UTF8"
+            },
+            {
+                "name": "Amount",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Probability",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "ExpectedRevenue",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "TotalOpportunityQuantity",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "CloseDate",
+                "type": "INT96"
+            },
+            {
+                "name": "Type",
+                "type": "UTF8"
+            },
+            {
+                "name": "NextStep",
+                "type": "UTF8"
+            },
+            {
+                "name": "LeadSource",
+                "type": "UTF8"
+            },
+            {
+                "name": "IsClosed",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "IsWon",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "ForecastCategory",
+                "type": "UTF8"
+            },
+            {
+                "name": "ForecastCategoryName",
+                "type": "UTF8"
+            },
+            {
+                "name": "CampaignId",
+                "type": "UTF8"
+            },
+            {
+                "name": "HasOpportunityLineItem",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Pricebook2Id",
+                "type": "UTF8"
+            },
+            {
+                "name": "OwnerId",
+                "type": "UTF8"
+            },
+            {
+                "name": "CreatedDate",
+                "type": "INT96"
+            },
+            {
+                "name": "AgeInDays",
+                "type": "INT32"
+            },
+            {
+                "name": "CreatedById",
+                "type": "UTF8"
+            },
+            {
+                "name": "LastModifiedDate",
+                "type": "INT96"
+            },
+            {
+                "name": "LastModifiedById",
+                "type": "UTF8"
+            },
+            {
+                "name": "SystemModstamp",
+                "type": "INT96"
+            },
+            {
+                "name": "LastActivityDate",
+                "type": "INT96"
+            },
+            {
+                "name": "LastActivityInDays",
+                "type": "INT32"
+            },
+            {
+                "name": "PushCount",
+                "type": "INT32"
+            },
+            {
+                "name": "LastStageChangeDate",
+                "type": "INT96"
+            },
+            {
+                "name": "LastStageChangeInDays",
+                "type": "INT32"
+            },
+            {
+                "name": "FiscalQuarter",
+                "type": "INT32"
+            },
+            {
+                "name": "FiscalYear",
+                "type": "INT32"
+            },
+            {
+                "name": "Fiscal",
+                "type": "UTF8"
+            },
+            {
+                "name": "ContactId",
+                "type": "UTF8"
+            },
+            {
+                "name": "LastViewedDate",
+                "type": "INT96"
+            },
+            {
+                "name": "LastReferencedDate",
+                "type": "INT96"
+            },
+            {
+                "name": "PartnerAccountId",
+                "type": "UTF8"
+            },
+            {
+                "name": "SyncedQuoteId",
+                "type": "UTF8"
+            },
+            {
+                "name": "ContractId",
+                "type": "UTF8"
+            },
+            {
+                "name": "HasOpenActivity",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "HasOverdueTask",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "IqScore",
+                "type": "INT32"
+            },
+            {
+                "name": "LastAmountChangedHistoryId",
+                "type": "UTF8"
+            },
+            {
+                "name": "LastCloseDateChangedHistoryId",
+                "type": "UTF8"
+            },
+            {
+                "name": "IsPriorityRecord",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "OpportunityScoreId",
+                "type": "UTF8"
+            },
+            {
+                "name": "Other_Properties_Sum_Frequency_Payment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Lock_Funded_Deal__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Subsequent_Mortgage__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Loss_Reason__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Property_Street__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Property_City__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Total_LTV_PID__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Property_Zip_Code__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Note_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Sold_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Amortized_Over__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Due_in_Term__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Solicitor_Check_Completed__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Funding_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Appraisal_Date_Cutoff__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Instrument_Number__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Loan_Officer__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Purchase_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Lender_Fees__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Application_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Loan_Position__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Property_LTV__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Purchase_Date_2__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Total_Liens__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Broker_Agent__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Brokerage__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Holdback_Spread__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Property_Amount__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Expected_Closing_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Pricing_Option__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Variable_Pricing_Option__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Fixed_Pricing_Option__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Pricing_Option_Lender_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Pricing_Option_Commitment_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Broker_Finder_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Appraisal_Value__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Appraisal_Approval_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Appraisal_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Admin_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Purchase_Value__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Insurance_Premium__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Monthly_Payment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Mortgage_Amount__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Net_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Term__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Brokerage_City__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Client_Email__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Lot__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Block__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Concession_Township__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Appraised_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Branch_Approval__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Age__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Living_Space__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Lot_Size__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Property_Inspected_On__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Solicitor_on_file__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Purchase_Price__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Estimated_Value__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Appraised_Value__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Heating_Cost__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Condo_Fees__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Annual_Taxes__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Improvements__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Exported_to_TMO__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Current_Product_Pricing__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Filogix_ID__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Loan_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Purpose__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Requested_Term_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Payment_Frequency__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Repayment_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Property_State__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Heating_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Dwelling_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Dwelling_Style__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Garage_Size__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Garage_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Environmental_Hazard__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Approval_Received__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Taxation_Year__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Purpose_2__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Renewal_Pricing__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Difference_Currency__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Frequency_Payment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Frequency_Payment_2__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Finance_Approval__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Discharge_Requested__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Actual_LTV__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "EFT_File_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Appraisal_Value_at_Renewal__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Renewal_Origination_LTV__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Loan_Type_2__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Maturity_Date_2__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Mortgage__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Mortgage_2__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Mortgage_Balance__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Balance_2__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Mortgage_Holder__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Holder_2__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Mortgage_Interest_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Interest_Rate_2__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Type_2__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Original_Mortgage_Amount__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Original_Amount_2__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Solicitor_Account_Email__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Credit_Pulled_By__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Payment_Frequency_2__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Short_Term_Request_Reason__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Difference_Percent__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Rate_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Rate_Type_2__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Maturity_Date_in_3_Months__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Existing_Mortgage_Term_Type_2__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Content_for_Broker_Pre_Approval_1_Option__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Appraiser_1__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Appraiser_2__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "New_Maturity_Date_on_Renewal__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Value_of_Improvements__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Sales_Executive__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Occupancy_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Conditions__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Monthly_ETF_Payment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Reason_Application_Lost_Other__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Discharge_Month__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Pre_Paid_Holdback__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Pre_Paid_Holdback__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Taxes_Paid_By__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Approved_LTV__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Pre_Paid_Holdback_Monthly_Calc__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Effective_Variable_Interest_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "BoC_Overnight_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Product_Name__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Oppono_Variable_Rate_Spread__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Annual_Percentage_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Term_In_Months__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Month_of_First_Payment__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Total_Term_Payments__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Pre_Payment_Penalty_In_Months__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_COB__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Interest_Payments__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Lender_Fee_Calc__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Wiring_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Search_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Underwriter_Approval__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Lender_Fee_Dollar_Value__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "APR__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "First_Draw_Amount__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Minimum_Amount__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Debit_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Interest_Cutoff_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Law_Firm_Address__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Solicitor_Account__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Expiry_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Advance_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Admin_Renewal_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Commitment_Expiry_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Approval_by_Credit_Risk_Manager__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Booking_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Trust_to_Lender__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Primary_Credit_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Current_Income__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Occupancy__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Dolphin__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Weighted_Requested_LTV__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Amortization__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Finder_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Stage_Change_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "GDS__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "TDS__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Stage_Notification_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Stage_Notification_Date_Time__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Interest_Adjustment_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "First_Payment_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Maturity_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Original_Total_Interest_Payments__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Application_Age__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Cost_of_Borrowing_Calc__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Approved_For_Renewal__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Pull_Credit__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "TMO_Account_Number_New__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Term_Beginning_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Term_Finish_Date_Calc__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Monthly_Payment_Prorated_Lender_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Payments_for_the_Term__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Principal_AMT_at_Maturity__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "COB_Percentage_Calc__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Auto_Renewal_Interest_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Chosen_Rate_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Auto_Renewal_LF__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Documents_check__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Parent_Application__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Method_of_Payment__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Trust_Ledger_Approved_By__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Amortization_Period__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Pre_Payment_Charges__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Pre_Authorized_debit_plan_agreement__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Renewal_Appraisal_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Term_Date_Range_2__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Preferred_Contact_Time__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "New_Lender__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Current_Renewal_LTV__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Renewal_Rate_Premium__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "TMO_Integration_Success__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Additional_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Lender_Fee_Paid__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Funded_Stage_Duration_in_Days__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Additional_Purpose__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Condition_of_Property__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "New_Email__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Discharge_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Renovation_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Title_Search_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Executive_Override__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Primary_Name_Co_Borrower_Name__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Documents_checked__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Trust_to_Operating__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Lead__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Will_It_Fund__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Deal_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Note_Rate_Lender_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Condo__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Lender__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "HELOC_Total_Interest_Payments__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Property_Inspected_Month__c",
+                "type": "INT96"
+            },
+            {
+                "name": "If_No_First_Mortgage__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "If_No_Second_Mortgage__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "If_No_Total_Liens__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "If_No_Remaining_Equity__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "If_No_Loan_To_Value__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Similarity_and_Distance_of_Comparables__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "A_R_Total_Interest_Payments__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "If_No_Appraisal_Company__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "If_No_Similarity_Distance_of_Comparables__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "If_No_Date_of_Sale_of_Comparables__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "If_No_Days_on_Market__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Days_on_Market__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Applicants_Data__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Application_Source__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Application_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Calculated_GDS__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Calculated_TDS__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Balance__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Holder__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_IAD__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Existing_Mortgage_Insured__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Existing_Mortgage_Loan_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Maturity_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Existing_Mortgage_Monthly_Payment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Original_Amount__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Payment_Frequency__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Mortgage_Registration_Number__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Term_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Filogix_Channels__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Financing_Waiver_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Include_in_TDS_calculation__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Message_Id__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Other_Mortgage_Requested__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Payment_Amount_Qualify__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Province_State__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "SUMPRODUCT_Approv_Mort_AND_Approv_LTV__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Property_LTV__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Requested_Mortgages__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Sum_Monthly_Payment_Liabilities__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Sum_Other_Incomes__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Maturity_Date_3__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Tenure__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Total_Expenses__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Balance_3__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Holder_3__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Total_Fee_Approval_to_Parent_Account__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Property_Inspection_Booking_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Existing_Mortgage_Insured_2__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Existing_Mortgage_Insured_3__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Existing_Mortgage_Loan_Type_3__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Credit_Report_Date_del__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Existing_Mortgage_Monthly_Payment_3__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Original_Amount_3__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Payment_Frequency_3__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Mortgage_Agent_Verification__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Mortgage_Brokerage_Verification__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Term_Type_3__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Type_3__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Rate_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Rate_Type_3__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Frequency_Payment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Frequency_Payment_3__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Interest_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Interest_Rate_3__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Existing_Mortgage_Monthly_Payment_2__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Residential_Status__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Short_Term_Refi__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Term_Date_Range_1__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Approved_Mortgage__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "BDM_Note__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Co_Applicant__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Secondary_Credit_Report_Age__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Secondary_Credit_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Interest_Adjustment_Date_3__c",
+                "type": "INT96"
+            },
+            {
+                "name": "PrimaryCreditReportAge__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "SecondaryCreditReportAge__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Solicitor__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Law_Firm__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Phone_Number_Solicitor__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Email_Address_Solicitor__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Address_Solicitor__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Created_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Time_at_Residence__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Time_at_Residence_in_Month__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Require_Additional_Funds__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Requested_LTV_WF__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Sum_of_Assets__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Amount_of_Liabilities__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Lowest_Credit_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Discharge_Administration_Fee_del__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Discharge_Mortgage_Statement_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Discharge_of_Mortgage_Fee_old__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Funded_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "IsStageChanged__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Issue_Commitment_Conditions_Duration__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Funded_Duration__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Issue_Commitment_Conditions_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Approved_Mortgage_for_APR__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Send_Credit_Email__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "CP_First_Mortgage_Amount__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "CP_Second_Mortgage_Amount__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "CP_Total_Liens__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "CP_Remaining_Equity__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "CP_Loan_to_Value__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Apply_To_Other__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Temporary_TMO_ACCOUNT_NUMBER__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Property_Description__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Beacon_Score_2__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Beacon_Score_3__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "FMLP__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Loan_Code__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Property_PID__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Property_County__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Holdback__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Custom_Requested_LTV__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Premium_Paid__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Lenders_Portion__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Gross_Yield__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Finders_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Approved_Mortgage_WF_Field__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Purchase_Price__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Lender_Fee_Split__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Month_Closed__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Successful_Purview_Report__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Purview_Address__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Purview_Date_Issued__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Purview_Estimated_Value__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Purview_Full_Legal_Description__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Purview_Land_Registry_Office__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Purview_Last_Sale__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Purview_Market_Shift__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Purview_Owner_Name__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Purview_Parcel_Status__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Purview_Registered_Amount__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Purview_Registered_Owner__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Purview_Registered_Titles__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Purview_Title_Number_PIN__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Purview_Title_Registration_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Rewritten__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "PurviewResponseCode__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Age_of_Appraisal_Report__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Send_Email_4_A__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "MCC_Mortgage__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "MCC_Split__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Trust_to_Pre_Paid__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Initials_1_Tag__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Initials_2_Tag__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Send_Email_4_B__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "FMLP_Split__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Initials_3_Tag__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Initials_4_Tag__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Oppono_Lender_Percentage__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Oppono_Lender__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Need_More_Information__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "City__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Order_Appraisal__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Short_Term_Refi_2_11__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "PIN_Number__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "FMLP_Mortgage__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Syndicated_Mortgage__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Renewal_LTV__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Oppono_Lender_Picklist__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "MCC_Lender_Percentage__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Direct_Lender_Split__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Amount_Funded__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "First_Dollar_Split__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Discharge_Reason__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Registered_Platform__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "TMO_Deal_Created__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Broker_Renewal_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Structure__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Registration__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Province__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Record_Type_Name__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Maturity_Date_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "MIC_Principal__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Effective_Fixed_Interest_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "FLMP_Principal__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "B_20_Compliant__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Property_Address__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Walkthrough_Required__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Property_Inspected__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Template_ID__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Template_Name__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Broker_Finder_Fee_Response__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Broker_Finder_Fee_Response2__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "BDM_Approval__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Walk_Through_Contact_Info__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "MCC_Mortgage_Report__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "FMLP_Mortgage_Report__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Onespan_Convention__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Onespan_Signer__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Access_Approved_Mortgage__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "BPA_Notes_for_Broker__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "BPA_Selected_Pricing__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Parent_Account__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Onespan_Reviewer__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Administration_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Mortgage_Statements_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Discharge_of_Mortgage_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Newton_Id__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Interest_Payments__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "NewtonSenderSystemId__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "NewtonDestinationSystemId__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "A_R_Interest_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "A_R_Lender_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "A_R_Lender_Fee_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "COB__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Principal_at_Maturity_from_Original__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Application_Number__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "MLS_Number__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Product_Name_Velocity__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Property_Address_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Property_Usage__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Requested_Payment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Waste_Disposal__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Zoning__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "MLS_Listing__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Credit_Approval__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Finder_s_Fee_Approval__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "BPA_Exception__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Duration_between_New_App_BPA__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Duration_between_New_App_Closing__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Duration_between_New_App_UR__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Duration_between_UR_BPA__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Exception_Approval__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Finder_s_Fee_Paid__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Commission__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Accountant_Email__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Operating_to_Reserve__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Current_Week_Number__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Revised_Monthly_Payment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Approved_Mortgage_Currency__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Emergency_Rush_Walk_Through__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Walk_Through_Charge_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Holdback_for_Instructions__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Renew_Amortization_Total_Interest_Pay__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Days_since_last_submit__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Title_Search_Completed__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Offset_Initials_1_Tag__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "System_Mortgage_Fulfillment_Specialist__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Template_Conga_ID__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Property_Inspector__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Current_Day__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Date_Of_Finder_s_Fee_Paid__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Discharge_Amount_From_TMO__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Discharge_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Converted_To_Refinance__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Maturity_Month__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Retainer_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Interest_Adjustment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Trust_Ledger_Approved__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Future_Available_Credit__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Updated_Mortgage_Status__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "CL_Admin_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Realtor_Opinion_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Oppono_Credit_Pull_Consent__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Oppono_Latest_Credit_Report_FICO_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Oppono_Number_of_Bankruptcy_Records__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Oppono_Latest_Credit_Report_Pulled_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Pre_Payment_Penalty_Dollar_Value__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "SUMPRODUCT_Approv_Mort_AND_Credit_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Current_Stage_Duration_in_days__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Co_Broker_Deal__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Co_Broker_Finder_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Optional_Initials_1_Tag__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Cost_of_Borrowing_Renewal__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "A_R_Single_Monthly_Payment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Co_Broker_Finder_Fee_Dollar__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "BoC_Overnight_Rate_Variable__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Document_Fulfillment_Completed__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Sum_of_Rental_Income__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Days_Before_Maturity__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Client_New_Email__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Please_Specify_Other_Lender__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "SUMPRODUCT_Request_Mort_AND_Request_LTV__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Template_OneSpan_Reviewer__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Template_OneSpan_Signer__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Template_Onespan_ID__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Trust_to_Reserve__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Signer_1_Tag__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Signer_2_Tag__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Signer_3_Tag__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Signer_4_Tag__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Transaction_Name__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Send_Appraisal_Email__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Custom_Maturity_Date__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Broker_Consent_Form__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Roof_Over_15_Years__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Electrical__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Water_Damage__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Other__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Observations__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Compounding_Frequency__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Effective_Periodic_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Number_of_Compounded_Periods__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Number_of_Payments__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Heloc_Interest_Payments__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Date_of_Sale_of_Comparables__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "A_R_Total_Monthly_Payments__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "A_R_Payment_A_R_Prorated_Lender_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "A_R_Administration_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "A_R_Administration_Renewal_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Month_of_First_Renewal_Payment__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "TMO_Account_Number_from_Origination__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Approval_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Lender_Approval__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Underwriting__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Person_Account_Contact_Id__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Mortgage_Registration_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Instructed__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Enforcement_Costs__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "RGPEnd__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Accelerated_Payment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "POS_PM_Company_Contact__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "POS_PM_Company_new__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "POS_Lawyer_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Lapse_Status__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Doc_Fulfillment_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Collateral_Province__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Requested_Amount__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Ownership__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Expected_Loss__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Charge__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Arrears_Status__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Reason_for_Arrears__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Percent_Owned__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Current_Beacon__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Annual_income__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Encumbrance_Balance__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Commitment_Issue_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Commitment_Return_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Mat_Date_15__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Mat_Date_20__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Mat_Date_25__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Funding_Partner__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Renewed_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Centum_Commission__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Property_Address_Blacklisted__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Lendesk_ID__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Lender_Status__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Lender_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "AI_Prediction_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Doc_Stage__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Benchmark_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Funding_Partner_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Monthly_payment_contract__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Allow_Renewal_Email__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Non_Subject_Property_Rental_Income__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Monthly_Payments_of_Liabilities__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Contract_GDS__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Contract_TDS__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Monthly_payment_qualifying__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Qualifying_GDS__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Qualifying_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Qualifying_TDS__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "PBC_Email_Distro__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Deal_Type_Pricings__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "PBC_Approved_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Purchase_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Request_ILR_Update__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Finder_Fee_Writeback__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Finder_Fee_Percent_Writeback__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Request_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Annual_Income_Primary__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Loan_Amount_Required_Primary__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Outstanding_Debts_Primary__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Annual_Income_Co_App__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Loan_Amount_Required_Co_App__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Outstanding_Debts_Co_App__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Appraisal_Value_at_Renewal_Writeback__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Annual_Income_Primary_Writeb__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Loan_Amount_Required_Primary_Writeback__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Outstanding_Debts_Primary_Writeback__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Annual_Income_Co_App_Writeback__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Loan_Amount_Required_Co_App_Writeback__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Outstanding_Debts_Co_App_Writeback__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Monthly_Renewal_Premium_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Chosen_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Negative_Amortization_Formula__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "PST_on_Insurance_Premium__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Broker_Referral_Fee_Currency__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Broker_Referral_Fee_Percent__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Fee_del__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "SUMPRODUCT_Approv_Mort_AND_Annual_Rate__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "SUMPRODUCT_Approv_Mort_AND_Lender_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Origination_Fee_del__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Funding_Amount_del__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Duration_Between_Closing_and_Funded__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "AML_Exception_Comment__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "AML_Exception__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "WC_Action_Required__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Short_Term_Renewal__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Can_you_tell_us_who_the_lender_is__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Client_Phone__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Request_a_discharge__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "What_is_the_term_in_months_you_require__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Client_Form_Expiration_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Discharge_Statement_Requested__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "PoS_Start_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "PoS_Start_Date_Age_In_Days__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Possession_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Deal_Pending_Reason__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Working_Agent_Details__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Licence_Class__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Mortgage_Processing_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Mortgage_Processing_FeeDV__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Net_Lender_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "QBO_QB_Error_Message__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "QBO_QB_Sync_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "QBO_QuickBooks_ID__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "QBO_Synced__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Trust_Ledger_QB_ID__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Test__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "X1_Day_Before_Maturity__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Deal_Pending__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "X50_Lender_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Corporation_Deal__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Manual_AML_Run_Flag__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Prediction_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Likely_to_Fund__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "EFT_File_Date_Phase_2__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Sold_Price__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Sold_Firm_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "PoS_Closing_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Sold_Conditional_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Number_of_Offers__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Purchase_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Refi_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Funded_Date_Credit_Report_Age__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Funded_Date_Today__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "ACRA_FD_T__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Legal_Fee__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Lender_Fee_Payment_Method__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Lender_Fee_Amount_Paid__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Co_Guarantor_Credit_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Guarantor_Credit_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "SUMPRODUCT_PAMFO_AND_Credit_Score__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "POS_End__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Category__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Outcome_of_Call__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Payment_Reschedule_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Bounce_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Appraised_Value_PoS__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Mortgage_Payment_Deferred__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Remaining_Equity__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Converted_to_Mortgage_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Principle_Balance_at_Renewal__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Broker_Document_Portal_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Appraisal_Fee_Deferred__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Walkthrough_Fee_Deferred__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Total_Deferment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Lender_Fee_Deferred_Amount__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "TMO_Account_Number_Numeric_Value__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Stage_Closing_Solicitor_Email_Sent__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Admin_Renewal_Fee_Paid__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Custom_Lender_Fee_Deferment_Amount__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Lender_Fee_Deferment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Is_Application_Closed_By_Lawyer__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Lawyer_Document_Portal_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Lawyer_Request_Additional_Docs_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Lawyer_Requested_Documents__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Oppono_Appraiser_Exception__c",
+                "type": "BOOLEAN"
+            },
+            {
+                "name": "Reason_for_Appraiser_Exception__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Calculated_Renewal_File_Creation_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Scheduled_Closing_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "PoS_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Amortization_Writeback__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Monthly_Payment_Difference__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Corporate_Entity_on_Title__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "PoS_Status_Changed_Date_Time__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Securitization_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Lawyer_Upload_Docs_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Lawyer_Uploaded_Documents__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Working_Agent__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Home_Fire_Insurance_Companies__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "POS_Possession_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Insurance_Expiry_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Insurance_Policy_Number__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "PoS_Contact__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "PoS_Law_Firm__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "POS_PM_Company__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "POS_Appraisal_Company_1__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "POS_Appraisal_Company_2__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Securitization_Pool__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Property_Insurance_Lapsed_As_Of__c",
+                "type": "INT96"
+            },
+            {
+                "name": "POS_Law_Firm_File__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "POS_Lawyer_Document_Portal_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "POS_Lawyer_Request_Additional_Docs_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "POS_Lawyer_Requested_Documents__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "POS_Lawyer_Upload_Docs_Notes__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "PoS_Status__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Days_In_PoS_Possession_Status__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Insurance_Broker__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "PoS_Status_Duration_in_Days__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Payoff_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Applicant_Phone__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Payoff_Type_2__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Payoff_Type_3__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Existing_Mortgage_Payoff_Type__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Shortfall_Potential__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Land_Transfer_Tax__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Deposit__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Down_Payment__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Listed_On__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Listed_Start_Date_Age_In_Days__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Listed_Price__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Realtor__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Lockbox__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "Prior_Encumbrance__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Interest_Paid_to_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "Daily_Per_Diem__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Total_Interest_Due__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Misc_Charges__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Grand_Total__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "Appraised_Value_before_Listing__c",
+                "type": "DECIMAL",
+                "precision": 38,
+                "scale": 18
+            },
+            {
+                "name": "PoS_Appraisal_Date__c",
+                "type": "INT96"
+            },
+            {
+                "name": "PoS_Assessment__c",
+                "type": "UTF8"
+            },
+            {
+                "name": "PoS_Underwriting_Assessment__c",
+                "type": "UTF8"
+            }
+        ]
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage_DEV')]"
+    ]
+}

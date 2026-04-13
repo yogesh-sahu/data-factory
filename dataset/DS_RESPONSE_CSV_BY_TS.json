@@ -1,0 +1,38 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_RESPONSE_CSV_BY_TS')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_ADDFUNDING",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "fileName": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobStorageLocation",
+                "fileName": {
+                    "value": "@dataset().fileName",
+                    "type": "Expression"
+                },
+                "folderPath": "raw/file_date=20260218",
+                "container": "snapshots"
+            },
+            "columnDelimiter": "~",
+            "rowDelimiter": "\n",
+            "escapeChar": "",
+            "firstRowAsHeader": false,
+            "quoteChar": ""
+        },
+        "schema": []
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_ADDFUNDING')]"
+    ]
+}

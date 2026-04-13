@@ -1,0 +1,62 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_RAW_RESPONSE_LOAN_BY_TS')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LS_AzureSql_CAL_DEV",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "AzureSqlTable",
+        "schema": [
+            {
+                "name": "api_url",
+                "type": "nvarchar"
+            },
+            {
+                "name": "api_response",
+                "type": "nvarchar"
+            },
+            {
+                "name": "file_name",
+                "type": "nvarchar"
+            },
+            {
+                "name": "is_processed",
+                "type": "tinyint",
+                "precision": 3
+            },
+            {
+                "name": "is_error",
+                "type": "tinyint",
+                "precision": 3
+            },
+            {
+                "name": "created_by",
+                "type": "nvarchar"
+            },
+            {
+                "name": "created_on",
+                "type": "datetime2",
+                "scale": 7
+            },
+            {
+                "name": "updated_by",
+                "type": "nvarchar"
+            },
+            {
+                "name": "updated_on",
+                "type": "datetime2",
+                "scale": 7
+            }
+        ],
+        "typeProperties": {
+            "schema": "dbo",
+            "table": "api_response_full"
+        }
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_AzureSql_CAL_DEV')]"
+    ]
+}

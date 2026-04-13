@@ -1,0 +1,29 @@
+{
+    "name": "[concat(parameters('factoryName'), '/Parquet1')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "AzureBlobStorage1",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "Parquet",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobStorageLocation",
+                "fileName": "data.parquet",
+                "folderPath": {
+                    "value": "@concat(     'GET_LOAN_BY_TS/file_date=',     formatDateTime(utcNow(),'yyyyMMdd') )",
+                    "type": "Expression"
+                },
+                "container": "snapshots"
+            },
+            "compressionCodec": "snappy"
+        },
+        "schema": []
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage1')]"
+    ]
+}
