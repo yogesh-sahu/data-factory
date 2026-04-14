@@ -63,7 +63,20 @@ When brainstorming runs, it surfaces:
 - Whether a parent → child ForEach pattern is needed
 - Which existing linked services / datasets can be reused
 
-### Step 2 — Ask grouped questions (skip answered ones)
+### Step 2 — Consult `sql/ddl.sql` before asking schema questions
+
+`sql/ddl.sql` is the authoritative schema reference for the `cal_bi_analytics_dev` database. Grep it before asking the user anything about tables, views, or columns:
+
+| Looking for | How to find it |
+|-------------|---------------|
+| Does a target table exist? | `Grep("CREATE TABLE.*\\.<TableName>", "sql/ddl.sql")` |
+| Control view for ForEach batches | `Grep("CREATE VIEW.*vw_", "sql/ddl.sql")` |
+| Column names + types for Copy mapping | Read the `CREATE TABLE` block for that table |
+| Staging table shape | Grep for `stg_<name>` |
+
+Only ask the user about schema things `ddl.sql` can't answer (business intent, which of multiple candidate tables is the right one, etc.).
+
+### Step 3 — Ask grouped questions (skip answered ones)
 
 Scan the user's request first. For every group below, if all questions in that group are already answered, **skip the group entirely**. Send unanswered groups as one message per group.
 
@@ -85,7 +98,7 @@ Scan the user's request first. For every group below, if all questions in that g
 - Which SQL views, stored procs, or tables must exist before this pipeline runs?
 - Any other pipelines this one calls or is called by?
 
-### Step 3 — Write the plan doc
+### Step 4 — Write the plan doc
 
 Save to `docs/pipelines/YYYY-MM-DD-<pipeline-name>.md` in the ARM template repo. Use this template exactly:
 
