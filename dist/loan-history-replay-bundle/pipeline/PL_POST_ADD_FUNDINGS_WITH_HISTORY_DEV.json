@@ -1,0 +1,148 @@
+{
+    "name": "PL_POST_ADD_FUNDINGS_WITH_HISTORY_DEV",
+    "properties": {
+        "description": "Orchestrator: for each loan, executes the reverse-replay child wrapped around the existing ad-funding call. Then refreshes the lender portfolio.",
+        "activities": [
+            {
+                "name": "LOOKUP_POST_FUND_ADJUSTMENT_WITH_HISTORY",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT * FROM dbo.vw_post_fund_adjustment_with_history",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach_Loan",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "LOOKUP_POST_FUND_ADJUSTMENT_WITH_HISTORY",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('LOOKUP_POST_FUND_ADJUSTMENT_WITH_HISTORY').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "EXEC_PL_CHILD_REVERSE_REPLAY_DEV",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "PL_CHILD_REVERSE_REPLAY_DEV",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true,
+                                "parameters": {
+                                    "loan_account": {
+                                        "value": "@item().account_no",
+                                        "type": "Expression"
+                                    },
+                                    "replay_batch_id": {
+                                        "value": "@pipeline().parameters.replay_batch_id",
+                                        "type": "Expression"
+                                    },
+                                    "loan_history_post_url": {
+                                        "value": "@item().loan_history_post_url",
+                                        "type": "Expression"
+                                    },
+                                    "loan_history_token": {
+                                        "value": "@item().loan_history_token",
+                                        "type": "Expression"
+                                    },
+                                    "loan_history_dbase": {
+                                        "value": "@item().loan_history_dbase",
+                                        "type": "Expression"
+                                    },
+                                    "api_url": {
+                                        "value": "@item().api_url",
+                                        "type": "Expression"
+                                    },
+                                    "token": {
+                                        "value": "@item().token",
+                                        "type": "Expression"
+                                    },
+                                    "dbase_name": {
+                                        "value": "@item().dbase_name",
+                                        "type": "Expression"
+                                    },
+                                    "api_body": {
+                                        "value": "@item().api_body",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "EXEC_PL_LOAD_FUND_ADJUSTMENT_LENDER_PORTFOLIO",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "ForEach_Loan",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "PL_LOAD_FUND_ADJUSTMENT_LENDER_PORTFOLIO_DEV",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {}
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "parameters": {
+            "replay_batch_id": {
+                "type": "string"
+            }
+        },
+        "folder": {
+            "name": "CAL_DEV"
+        },
+        "annotations": []
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

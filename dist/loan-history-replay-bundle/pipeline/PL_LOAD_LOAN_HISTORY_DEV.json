@@ -1,0 +1,120 @@
+{
+    "name": "PL_LOAD_LOAN_HISTORY_DEV",
+    "properties": {
+        "description": "For each loan in fund_adjustment_detail (is_processed=0), fetches GetLoanHistory and stages current-month transactions.",
+        "activities": [
+            {
+                "name": "LOOKUP_LOANS_TO_PROCESS_HISTORY",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": "SELECT loan_account, history_url, getloan_url, token, dbase_name, effective_date, fund_percentage FROM dbo.vw_loans_to_process_history",
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach_Loan",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "LOOKUP_LOANS_TO_PROCESS_HISTORY",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('LOOKUP_LOANS_TO_PROCESS_HISTORY').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "EXEC_PL_CHILD_LOAD_LOAN_HISTORY_DEV",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "PL_CHILD_LOAD_LOAN_HISTORY_DEV",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true,
+                                "parameters": {
+                                    "loan_account": {
+                                        "value": "@item().loan_account",
+                                        "type": "Expression"
+                                    },
+                                    "replay_batch_id": {
+                                        "value": "@pipeline().parameters.replay_batch_id",
+                                        "type": "Expression"
+                                    },
+                                    "history_url": {
+                                        "value": "@item().history_url",
+                                        "type": "Expression"
+                                    },
+                                    "getloan_url": {
+                                        "value": "@item().getloan_url",
+                                        "type": "Expression"
+                                    },
+                                    "token": {
+                                        "value": "@item().token",
+                                        "type": "Expression"
+                                    },
+                                    "dbase_name": {
+                                        "value": "@item().dbase_name",
+                                        "type": "Expression"
+                                    },
+                                    "effective_date": {
+                                        "value": "@item().effective_date",
+                                        "type": "Expression"
+                                    },
+                                    "fund_percentage": {
+                                        "value": "@item().fund_percentage",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "parameters": {
+            "replay_batch_id": {
+                "type": "string"
+            }
+        },
+        "folder": {
+            "name": "CAL_DEV"
+        },
+        "annotations": []
+    },
+    "type": "Microsoft.DataFactory/factories/pipelines"
+}

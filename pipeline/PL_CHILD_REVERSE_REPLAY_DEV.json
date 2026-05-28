@@ -1,0 +1,604 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_CHILD_REVERSE_REPLAY_DEV')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "description": "Per-loan three-phase worker: (a) reverse all current-month txns via AddLoanHistory, (b) call existing ad-funding API, (c) replay all reversed txns via AddLoanHistory.",
+        "activities": [
+            {
+                "name": "LOOKUP_TXNS_TO_REVERSE",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": {
+                            "value": "SELECT replay_stage_id, loan_account, reverse_body FROM dbo.vw_loan_history_reverse_queue WHERE replay_batch_id = '@{pipeline().parameters.replay_batch_id}' AND loan_account = '@{pipeline().parameters.loan_account}' ORDER BY replay_stage_id",
+                            "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach_Reverse",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "LOOKUP_TXNS_TO_REVERSE",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('LOOKUP_TXNS_TO_REVERSE').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "CALL_ADD_LOAN_HISTORY_REVERSE",
+                            "type": "WebActivity",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "POST",
+                                "headers": {
+                                    "Token": {
+                                        "value": "@pipeline().parameters.loan_history_token",
+                                        "type": "Expression"
+                                    },
+                                    "Database": {
+                                        "value": "@pipeline().parameters.loan_history_dbase",
+                                        "type": "Expression"
+                                    },
+                                    "Content-Type": "application/json"
+                                },
+                                "url": {
+                                    "value": "@pipeline().parameters.loan_history_post_url",
+                                    "type": "Expression"
+                                },
+                                "body": {
+                                    "value": "@item().reverse_body",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "SCR_UPDATE_REVERSE_SUCCESS",
+                            "type": "Script",
+                            "dependsOn": [
+                                {
+                                    "activity": "CALL_ADD_LOAN_HISTORY_REVERSE",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "linkedServiceName": {
+                                "referenceName": "LS_AzureSql_CAL_DEV",
+                                "type": "LinkedServiceReference"
+                            },
+                            "typeProperties": {
+                                "scripts": [
+                                    {
+                                        "parameters": [
+                                            {
+                                                "name": "replay_stage_id",
+                                                "type": "Int64",
+                                                "value": {
+                                                    "value": "@item().replay_stage_id",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            },
+                                            {
+                                                "name": "recid",
+                                                "type": "String",
+                                                "value": {
+                                                    "value": "@string(activity('CALL_ADD_LOAN_HISTORY_REVERSE').output.Data)",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            },
+                                            {
+                                                "name": "response",
+                                                "type": "String",
+                                                "value": {
+                                                    "value": "@string(activity('CALL_ADD_LOAN_HISTORY_REVERSE').output)",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            }
+                                        ],
+                                        "type": "Query",
+                                        "text": "EXEC dbo.pr_update_loan_history_phase @replay_stage_id = @replay_stage_id, @phase = 'reverse', @status = 'PS', @recid = @recid, @response = @response"
+                                    }
+                                ],
+                                "scriptBlockExecutionTimeout": "02:00:00"
+                            }
+                        },
+                        {
+                            "name": "SCR_UPDATE_REVERSE_FAILURE",
+                            "type": "Script",
+                            "dependsOn": [
+                                {
+                                    "activity": "CALL_ADD_LOAN_HISTORY_REVERSE",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "linkedServiceName": {
+                                "referenceName": "LS_AzureSql_CAL_DEV",
+                                "type": "LinkedServiceReference"
+                            },
+                            "typeProperties": {
+                                "scripts": [
+                                    {
+                                        "parameters": [
+                                            {
+                                                "name": "replay_stage_id",
+                                                "type": "Int64",
+                                                "value": {
+                                                    "value": "@item().replay_stage_id",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            }
+                                        ],
+                                        "type": "Query",
+                                        "text": "EXEC dbo.pr_update_loan_history_phase @replay_stage_id = @replay_stage_id, @phase = 'reverse', @status = 'FAIL', @recid = NULL, @response = N'AddLoanHistory reverse call failed; see ADF activity run logs.'"
+                                    }
+                                ],
+                                "scriptBlockExecutionTimeout": "02:00:00"
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "EXEC_PL_CHILD_POST_ADD_FUNDINGS_DEV",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "ForEach_Reverse",
+                        "dependencyConditions": [
+                            "Succeeded",
+                            "Completed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "pipeline": {
+                        "referenceName": "PL_CHILD_POST_ADD_FUNDINGS_DEV",
+                        "type": "PipelineReference"
+                    },
+                    "waitOnCompletion": true,
+                    "parameters": {
+                        "api_url": {
+                            "value": "@pipeline().parameters.api_url",
+                            "type": "Expression"
+                        },
+                        "token": {
+                            "value": "@pipeline().parameters.token",
+                            "type": "Expression"
+                        },
+                        "dbase_name": {
+                            "value": "@pipeline().parameters.dbase_name",
+                            "type": "Expression"
+                        },
+                        "account_no": {
+                            "value": "@pipeline().parameters.loan_account",
+                            "type": "Expression"
+                        },
+                        "api_body": {
+                            "value": "@pipeline().parameters.api_body",
+                            "type": "Expression"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "SCR_FANOUT_ADFUND_SUCCESS",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "EXEC_PL_CHILD_POST_ADD_FUNDINGS_DEV",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_DEV",
+                    "type": "LinkedServiceReference"
+                },
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "parameters": [
+                                {
+                                    "name": "replay_batch_id",
+                                    "type": "String",
+                                    "value": {
+                                        "value": "@pipeline().parameters.replay_batch_id",
+                                        "type": "Expression"
+                                    },
+                                    "direction": "Input"
+                                },
+                                {
+                                    "name": "loan_account",
+                                    "type": "String",
+                                    "value": {
+                                        "value": "@pipeline().parameters.loan_account",
+                                        "type": "Expression"
+                                    },
+                                    "direction": "Input"
+                                }
+                            ],
+                            "type": "Query",
+                            "text": "EXEC dbo.pr_fanout_adfund_response @replay_batch_id = @replay_batch_id, @loan_account = @loan_account, @status = 'PS', @response = N'Ad-funding call succeeded; see PL_CHILD_POST_ADD_FUNDINGS_DEV run for response details.'"
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "SCR_FANOUT_ADFUND_FAILURE",
+                "type": "Script",
+                "dependsOn": [
+                    {
+                        "activity": "EXEC_PL_CHILD_POST_ADD_FUNDINGS_DEV",
+                        "dependencyConditions": [
+                            "Failed"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "linkedServiceName": {
+                    "referenceName": "LS_AzureSql_CAL_DEV",
+                    "type": "LinkedServiceReference"
+                },
+                "typeProperties": {
+                    "scripts": [
+                        {
+                            "parameters": [
+                                {
+                                    "name": "replay_batch_id",
+                                    "type": "String",
+                                    "value": {
+                                        "value": "@pipeline().parameters.replay_batch_id",
+                                        "type": "Expression"
+                                    },
+                                    "direction": "Input"
+                                },
+                                {
+                                    "name": "loan_account",
+                                    "type": "String",
+                                    "value": {
+                                        "value": "@pipeline().parameters.loan_account",
+                                        "type": "Expression"
+                                    },
+                                    "direction": "Input"
+                                }
+                            ],
+                            "type": "Query",
+                            "text": "EXEC dbo.pr_fanout_adfund_response @replay_batch_id = @replay_batch_id, @loan_account = @loan_account, @status = 'FAIL', @response = N'Ad-funding call failed; see PL_CHILD_POST_ADD_FUNDINGS_DEV run for error.'"
+                        }
+                    ],
+                    "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "LOOKUP_TXNS_TO_REPLAY",
+                "type": "Lookup",
+                "dependsOn": [
+                    {
+                        "activity": "SCR_FANOUT_ADFUND_SUCCESS",
+                        "dependencyConditions": [
+                            "Succeeded",
+                            "Skipped"
+                        ]
+                    },
+                    {
+                        "activity": "SCR_FANOUT_ADFUND_FAILURE",
+                        "dependencyConditions": [
+                            "Succeeded",
+                            "Skipped"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": {
+                            "value": "SELECT replay_stage_id, loan_account, replay_body FROM dbo.vw_loan_history_replay_queue WHERE replay_batch_id = '@{pipeline().parameters.replay_batch_id}' AND loan_account = '@{pipeline().parameters.loan_account}' ORDER BY replay_stage_id",
+                            "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "firstRowOnly": false
+                }
+            },
+            {
+                "name": "ForEach_Replay",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "LOOKUP_TXNS_TO_REPLAY",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('LOOKUP_TXNS_TO_REPLAY').output.value",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "CALL_ADD_LOAN_HISTORY_REPLAY",
+                            "type": "WebActivity",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "POST",
+                                "headers": {
+                                    "Token": {
+                                        "value": "@pipeline().parameters.loan_history_token",
+                                        "type": "Expression"
+                                    },
+                                    "Database": {
+                                        "value": "@pipeline().parameters.loan_history_dbase",
+                                        "type": "Expression"
+                                    },
+                                    "Content-Type": "application/json"
+                                },
+                                "url": {
+                                    "value": "@pipeline().parameters.loan_history_post_url",
+                                    "type": "Expression"
+                                },
+                                "body": {
+                                    "value": "@item().replay_body",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "SCR_UPDATE_REPLAY_SUCCESS",
+                            "type": "Script",
+                            "dependsOn": [
+                                {
+                                    "activity": "CALL_ADD_LOAN_HISTORY_REPLAY",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "linkedServiceName": {
+                                "referenceName": "LS_AzureSql_CAL_DEV",
+                                "type": "LinkedServiceReference"
+                            },
+                            "typeProperties": {
+                                "scripts": [
+                                    {
+                                        "parameters": [
+                                            {
+                                                "name": "replay_stage_id",
+                                                "type": "Int64",
+                                                "value": {
+                                                    "value": "@item().replay_stage_id",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            },
+                                            {
+                                                "name": "recid",
+                                                "type": "String",
+                                                "value": {
+                                                    "value": "@string(activity('CALL_ADD_LOAN_HISTORY_REPLAY').output.Data)",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            },
+                                            {
+                                                "name": "response",
+                                                "type": "String",
+                                                "value": {
+                                                    "value": "@string(activity('CALL_ADD_LOAN_HISTORY_REPLAY').output)",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            }
+                                        ],
+                                        "type": "Query",
+                                        "text": "EXEC dbo.pr_update_loan_history_phase @replay_stage_id = @replay_stage_id, @phase = 'replay', @status = 'PS', @recid = @recid, @response = @response"
+                                    }
+                                ],
+                                "scriptBlockExecutionTimeout": "02:00:00"
+                            }
+                        },
+                        {
+                            "name": "SCR_UPDATE_REPLAY_FAILURE",
+                            "type": "Script",
+                            "dependsOn": [
+                                {
+                                    "activity": "CALL_ADD_LOAN_HISTORY_REPLAY",
+                                    "dependencyConditions": [
+                                        "Failed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "linkedServiceName": {
+                                "referenceName": "LS_AzureSql_CAL_DEV",
+                                "type": "LinkedServiceReference"
+                            },
+                            "typeProperties": {
+                                "scripts": [
+                                    {
+                                        "parameters": [
+                                            {
+                                                "name": "replay_stage_id",
+                                                "type": "Int64",
+                                                "value": {
+                                                    "value": "@item().replay_stage_id",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            }
+                                        ],
+                                        "type": "Query",
+                                        "text": "EXEC dbo.pr_update_loan_history_phase @replay_stage_id = @replay_stage_id, @phase = 'replay', @status = 'FAIL', @recid = NULL, @response = N'AddLoanHistory replay call failed; loan is out of balance by this txn. See ADF activity run logs.'"
+                                    }
+                                ],
+                                "scriptBlockExecutionTimeout": "02:00:00"
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "parameters": {
+            "loan_account": {
+                "type": "string"
+            },
+            "replay_batch_id": {
+                "type": "string"
+            },
+            "loan_history_post_url": {
+                "type": "string"
+            },
+            "loan_history_token": {
+                "type": "string"
+            },
+            "loan_history_dbase": {
+                "type": "string"
+            },
+            "api_url": {
+                "type": "string"
+            },
+            "token": {
+                "type": "string"
+            },
+            "dbase_name": {
+                "type": "string"
+            },
+            "api_body": {
+                "type": "string"
+            }
+        },
+        "folder": {
+            "name": "CAL_DEV"
+        },
+        "annotations": []
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_AZURE_SQL_CAL_DEV')]",
+        "[concat(variables('factoryId'), '/linkedServices/LS_AzureSql_CAL_DEV')]",
+        "[concat(variables('factoryId'), '/pipelines/PL_CHILD_POST_ADD_FUNDINGS_DEV')]"
+    ]
+}

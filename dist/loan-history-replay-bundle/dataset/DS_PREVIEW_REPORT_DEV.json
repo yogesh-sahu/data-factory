@@ -1,0 +1,33 @@
+{
+    "name": "DS_PREVIEW_REPORT_DEV",
+    "properties": {
+        "description": "Output target for the loan-history preview HTML report. quoteChar/escapeChar empty so the report_html column is written verbatim as an .html file.",
+        "linkedServiceName": {
+            "referenceName": "LS_ADDFUNDING",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "report_file_name": {
+                "type": "string"
+            }
+        },
+        "annotations": [],
+        "type": "DelimitedText",
+        "typeProperties": {
+            "location": {
+                "type": "AzureBlobStorageLocation",
+                "fileName": {
+                    "value": "@dataset().report_file_name",
+                    "type": "Expression"
+                },
+                "container": "dev-add-funding-processed"
+            },
+            "columnDelimiter": ",",
+            "escapeChar": "",
+            "firstRowAsHeader": false,
+            "quoteChar": ""
+        },
+        "schema": []
+    },
+    "type": "Microsoft.DataFactory/factories/datasets"
+}

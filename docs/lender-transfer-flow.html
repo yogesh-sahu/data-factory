@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lender Transfer — What runs today vs. what we add</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,900&family=Newsreader:ital,opsz@0,6..72;1,6..72&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFEBE0;
+    --paper-2:#E6E1D3;
+    --ink:#1C1A15;
+    --ink-soft:#5A554733;
+    --slate:#6B6657;
+    --exists:#3F6B5E;      /* muted teal — already running */
+    --exists-bg:#3F6B5E14;
+    --add:#B7410E;         /* terracotta — what we add */
+    --add-bg:#B7410E12;
+    --rule:#1C1A1522;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Newsreader",Georgia,serif;
+    font-size:18px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(var(--ink-soft) 0.5px, transparent 0.5px);
+    background-size:22px 22px;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:64px 32px 120px}
+
+  .kicker{
+    font-family:"Spline Sans Mono",monospace;
+    font-size:12px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--add);font-weight:600;margin-bottom:18px;
+  }
+  h1{
+    font-family:"Fraunces",serif;
+    font-weight:900;
+    font-size:clamp(38px,6vw,68px);
+    line-height:1.02;
+    letter-spacing:-.02em;
+    margin-bottom:22px;
+  }
+  h1 em{font-style:italic;color:var(--add)}
+  .lede{
+    font-size:21px;color:var(--slate);max-width:62ch;
+    border-left:3px solid var(--add);padding-left:20px;
+  }
+
+  .legend{display:flex;gap:28px;flex-wrap:wrap;margin:48px 0 8px}
+  .legend span{display:flex;align-items:center;gap:10px;font-family:"Spline Sans Mono",monospace;font-size:13px;letter-spacing:.04em}
+  .dot{width:14px;height:14px;border-radius:3px;display:inline-block}
+  .dot.e{background:var(--exists)}
+  .dot.a{background:var(--add)}
+
+  section{margin-top:72px}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:8px;border-bottom:2px solid var(--ink);padding-bottom:10px}
+  .sec-num{font-family:"Spline Sans Mono",monospace;font-size:13px;color:var(--slate)}
+  .sec-head h2{font-family:"Fraunces",serif;font-weight:600;font-size:30px;letter-spacing:-.01em}
+  .sec-sub{color:var(--slate);font-size:17px;margin:14px 0 30px;max-width:64ch}
+
+  /* Scenario strip */
+  .scenario{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+  .scenario div{background:var(--paper);padding:22px 24px}
+  .scenario .lbl{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--slate);margin-bottom:8px}
+  .scenario .val{font-family:"Fraunces",serif;font-size:26px;font-weight:600}
+  .scenario .val small{display:block;font-family:"Newsreader",serif;font-size:15px;font-weight:400;color:var(--slate);margin-top:4px}
+
+  /* Flow */
+  .flow{position:relative;margin-top:10px}
+  .node{
+    position:relative;
+    display:grid;grid-template-columns:54px 1fr;gap:22px;
+    padding:22px 26px;margin-bottom:14px;
+    border-radius:12px;background:var(--paper);
+    border:1.5px solid var(--rule);
+  }
+  .node.exists{border-color:var(--exists);background:var(--exists-bg)}
+  .node.add{border-color:var(--add);background:var(--add-bg);border-style:dashed}
+  .node .idx{
+    font-family:"Spline Sans Mono",monospace;font-weight:600;font-size:15px;
+    width:54px;height:54px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    border:1.5px solid currentColor;
+  }
+  .node.exists .idx{color:var(--exists)}
+  .node.add .idx{color:var(--add)}
+  .node h3{font-family:"Fraunces",serif;font-size:21px;font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .tag{font-family:"Spline Sans Mono",monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;padding:4px 9px;border-radius:5px;font-weight:600}
+  .tag.e{background:var(--exists);color:var(--paper)}
+  .tag.a{background:var(--add);color:var(--paper)}
+  .node p{color:var(--slate);font-size:16.5px}
+  .node code{font-family:"Spline Sans Mono",monospace;font-size:14px;background:#1C1A150d;padding:2px 7px;border-radius:4px;color:var(--ink)}
+  .conn{height:14px;width:2px;background:var(--rule);margin-left:53px}
+
+  /* API table */
+  .api{width:100%;border-collapse:collapse;margin-top:8px;font-size:16px}
+  .api th,.api td{text-align:left;padding:16px 18px;border-bottom:1px solid var(--rule);vertical-align:top}
+  .api th{font-family:"Spline Sans Mono",monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate);font-weight:600}
+  .api td:first-child{font-family:"Spline Sans Mono",monospace;font-size:14px;font-weight:600;white-space:nowrap}
+  .pill{font-family:"Spline Sans Mono",monospace;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:.06em}
+  .pill.get{background:var(--exists-bg);color:var(--exists);border:1px solid var(--exists)}
+  .pill.post{background:var(--add-bg);color:var(--add);border:1px solid var(--add)}
+
+  /* Body math card */
+  .card{margin-top:30px;border:1.5px solid var(--ink);border-radius:12px;overflow:hidden}
+  .card .top{background:var(--ink);color:var(--paper);padding:14px 24px;font-family:"Spline Sans Mono",monospace;font-size:13px;letter-spacing:.1em}
+  .card .body{padding:8px 0}
+  .leg{display:grid;grid-template-columns:1fr auto auto;gap:18px;padding:13px 26px;align-items:center;border-bottom:1px dashed var(--rule);font-size:16px}
+  .leg:last-child{border-bottom:0}
+  .leg .who{font-family:"Newsreader",serif}
+  .leg .amt{font-family:"Spline Sans Mono",monospace;font-weight:600}
+  .leg .amt.neg{color:var(--add)}
+  .leg .amt.pos{color:var(--exists)}
+  .leg .note{font-family:"Spline Sans Mono",monospace;font-size:11px;color:var(--slate);letter-spacing:.08em;text-transform:uppercase}
+
+  .foot{margin-top:80px;border-top:2px solid var(--ink);padding-top:24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px;font-family:"Spline Sans Mono",monospace;font-size:12px;color:var(--slate);letter-spacing:.06em}
+  .foot strong{color:var(--add)}
+
+  .reveal{opacity:0;transform:translateY(16px);animation:rise .7s cubic-bezier(.2,.7,.2,1) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .flow .node:nth-child(1){animation-delay:.05s}
+  .flow .node:nth-child(3){animation-delay:.1s}
+  .flow .node:nth-child(5){animation-delay:.15s}
+  .flow .node:nth-child(7){animation-delay:.2s}
+  .flow .node:nth-child(9){animation-delay:.25s}
+  .flow .node:nth-child(11){animation-delay:.3s}
+
+  @media(max-width:720px){
+    .scenario{grid-template-columns:1fr}
+    .leg{grid-template-columns:1fr;gap:4px}
+    .node{grid-template-columns:1fr;gap:14px}
+    .node .idx{width:44px;height:44px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker reveal">CAL · Lender Transfer · Reference</div>
+  <h1 class="reveal" style="animation-delay:.05s">Moving a loan from<br>Lender&nbsp;A to <em>Lender&nbsp;B</em></h1>
+  <p class="lede reveal" style="animation-delay:.1s">
+    Today only the ownership swap runs. The payments Lender&nbsp;A collected
+    <em>after the effective date</em> stay stuck with them. Here is what runs now,
+    and the four pieces we add to fix it — all riding the same TMO call.
+  </p>
+
+  <div class="legend reveal" style="animation-delay:.15s">
+    <span><i class="dot e"></i> Already running today</span>
+    <span><i class="dot a"></i> What we add</span>
+  </div>
+
+  <!-- SCENARIO -->
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>The scenario</h2></div>
+    <p class="sec-sub">One worked example, used throughout this page.</p>
+    <div class="scenario">
+      <div><div class="lbl">Effective date</div><div class="val">28 Feb<small>ownership truly moves here</small></div></div>
+      <div><div class="lbl">Posted to TMO</div><div class="val">5 Mar<small>the day we run the pipeline</small></div></div>
+      <div><div class="lbl">The gap</div><div class="val">1–5 Mar<small>payments wrongly kept by Lender&nbsp;A</small></div></div>
+    </div>
+  </section>
+
+  <!-- FLOW -->
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>The flow, step by step</h2></div>
+    <p class="sec-sub">Teal steps already exist in <code>PL_POST_ADD_FUNDINGS</code>. Dashed terracotta steps are the additions — they run <em>before</em> the existing loop, feeding extra rows into the same table.</p>
+
+    <div class="flow">
+
+      <div class="node add reveal">
+        <div class="idx">A1</div>
+        <div>
+          <h3>Fetch what Lender A received <span class="tag a">Add · GET</span></h3>
+          <p>Call TMO <code>search-lender-history</code> for Lender&nbsp;A on this loan, window <code>29 Feb → 5 Mar</code>. Land each payment into a new staging table.</p>
+        </div>
+      </div>
+      <div class="conn"></div>
+
+      <div class="node add reveal">
+        <div class="idx">A2</div>
+        <div>
+          <h3>Expand into catch-up rows <span class="tag a">Add · SQL</span></h3>
+          <p>New stored proc inserts one transfer row per payment into <code>fund_adjustment_detail</code> — old lender → new lender, dated on the payment day.</p>
+        </div>
+      </div>
+      <div class="conn"></div>
+
+      <div class="node exists reveal">
+        <div class="idx">1</div>
+        <div>
+          <h3>Read pending transfers <span class="tag e">Exists</span></h3>
+          <p><code>LOOKUP_POST_FUND_ADJUSTMENT</code> reads every unprocessed row from <code>vw_post_fund_adjustment</code> — now including the catch-up rows.</p>
+        </div>
+      </div>
+      <div class="conn"></div>
+
+      <div class="node exists reveal">
+        <div class="idx">2</div>
+        <div>
+          <h3>Build one TMO body per loan <span class="tag e">Exists</span></h3>
+          <p><code>vw_post_fund_adjustment_base</code> turns each row into a <strong>−</strong> on Lender&nbsp;A and a <strong>+</strong> on Lender&nbsp;B, grouped into a single JSON array per loan.</p>
+        </div>
+      </div>
+      <div class="conn"></div>
+
+      <div class="node exists reveal">
+        <div class="idx">3</div>
+        <div>
+          <h3>POST to TMO AddFundings <span class="tag e">Exists · POST</span></h3>
+          <p><code>PL_CHILD_POST_ADD_FUNDINGS</code> sends the whole batch in one call, then marks the rows processed with the API response.</p>
+        </div>
+      </div>
+      <div class="conn"></div>
+
+      <div class="node exists reveal">
+        <div class="idx">4</div>
+        <div>
+          <h3>Refresh both lenders' portfolios <span class="tag e">Exists</span></h3>
+          <p><code>PL_LOAD_FUND_ADJUSTMENT_LENDER_PORTFOLIO</code> re-pulls Lender&nbsp;A and Lender&nbsp;B from TMO so Azure SQL shows the corrected balances.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- WHAT THE CALL CARRIES -->
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>What the single AddFundings call carries</h2></div>
+    <p class="sec-sub">One POST, per loan. The first pair is the ownership move (runs today). The rest are the catch-up pairs (what we add).</p>
+
+    <div class="card">
+      <div class="top">POST · AddFundings · LoanAccount L-123</div>
+      <div class="body">
+        <div class="leg"><span class="who">Lender A — balance as of 28 Feb</span><span class="amt neg">− 500,000</span><span class="note">ownership · exists</span></div>
+        <div class="leg"><span class="who">Lender B — balance as of 28 Feb</span><span class="amt pos">+ 500,000</span><span class="note">ownership · exists</span></div>
+        <div class="leg"><span class="who">Lender A — payment recd 2 Mar</span><span class="amt neg">− 1,500</span><span class="note">catch-up · add</span></div>
+        <div class="leg"><span class="who">Lender B — payment recd 2 Mar</span><span class="amt pos">+ 1,500</span><span class="note">catch-up · add</span></div>
+        <div class="leg"><span class="who">Lender A — payment recd 4 Mar</span><span class="amt neg">− 2,000</span><span class="note">catch-up · add</span></div>
+        <div class="leg"><span class="who">Lender B — payment recd 4 Mar</span><span class="amt pos">+ 2,000</span><span class="note">catch-up · add</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APIS -->
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>APIs involved</h2></div>
+    <p class="sec-sub">Only two TMO endpoints. We never call a payment API and never delete anything.</p>
+    <table class="api">
+      <thead><tr><th>Endpoint</th><th>Type</th><th>Role</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>search-lender-history</td>
+          <td><span class="pill get">GET</span></td>
+          <td>Reads what Lender&nbsp;A received in the gap window. Read-only.</td>
+          <td><span class="tag a">Add</span></td>
+        </tr>
+        <tr>
+          <td>AddFundings</td>
+          <td><span class="pill post">POST</span></td>
+          <td>Moves ownership <em>and</em> the catch-up amounts — all funded-capital entries in one call.</td>
+          <td><span class="tag e">Exists</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- SUMMARY -->
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>What we add — the short list</h2></div>
+    <p class="sec-sub">Nothing in the existing post/refresh path changes. The additions only feed extra rows in first.</p>
+    <div class="flow">
+      <div class="node add"><div class="idx">SQL</div><div><h3>Database</h3><p>3 new columns on <code>fund_adjustment_detail</code> · new <code>api_master</code> row · new staging table · new view · new stored proc · one tweak to <code>vw_post_fund_adjustment_base</code>.</p></div></div>
+      <div class="conn"></div>
+      <div class="node add"><div class="idx">ADF</div><div><h3>Pipelines</h3><p>New <code>PL_CHILD_FETCH_LENDER_HISTORY</code> · new <code>PL_EXPAND_TRANSFER_REASSIGNMENT</code> · one step added to <code>PL_POST_ADD_FUNDINGS</code>.</p></div></div>
+      <div class="conn"></div>
+      <div class="node add"><div class="idx">ARM</div><div><h3>Template</h3><p>Register the two new pipelines and the modified one in <code>ARMTemplateForFactory.json</code> and the linked templates.</p></div></div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>CAL-DWH · adf-cal-dwh</span>
+    <span><strong>Gated on Andrei confirming</strong> the compensating funding entries are accepted by TMO</span>
+  </div>
+
+</div>
+</body>
+</html>
