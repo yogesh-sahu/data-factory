@@ -621,7 +621,8 @@ CREATE PROCEDURE dbo.pr_preview_load_loan_history
     @api_response     nvarchar(max),
     @lender_code      varchar(50),
     @fund_percentage  decimal(9,4),
-    @loan_response    nvarchar(max) = NULL    -- GetLoan response (for the live balance)
+    @loan_response    nvarchar(max) = NULL,   -- GetLoan response (for the live balance)
+    @dry_run          bit            = 1      -- 1 = preview only, 0 = real run (responses populated)
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -653,26 +654,29 @@ BEGIN
         JSON_VALUE(@loan_response, '$.Data.ByLastName'),
         JSON_VALUE(@loan_response, '$.Data[0].ByLastName'), '');
 
-    -- lenders for this loan (from the data warehouse)
+    -- lenders for this loan (from lender_portfolio_full, latest snapshot)
+    DECLARE @latest_file_date date = (
+        SELECT MAX(file_date) FROM dbo.lender_portfolio_full
+        WHERE account_no = @loan_account);
     DECLARE @lender_count int = (
         SELECT COUNT(*)
-        FROM dbo.dim_lender_portfolio lp
-        JOIN dbo.dim_lender dl ON dl.lender_rk = lp.lender_rk
-        WHERE lp.account_no = @loan_account
-          AND ISNULL(lp.valid_flag,'Y') = 'Y' AND ISNULL(dl.valid_flag,'Y') = 'Y');
+        FROM dbo.lender_portfolio_full lpf
+        JOIN dbo.lender_full lf ON lf.lender_rk = lpf.lender_rk
+        WHERE lpf.account_no = @loan_account
+          AND lpf.file_date = @latest_file_date);
     DECLARE @lender_names nvarchar(max) = (
-        SELECT STRING_AGG(CONVERT(nvarchar(max), dl.full_name), ', ')
-        FROM dbo.dim_lender_portfolio lp
-        JOIN dbo.dim_lender dl ON dl.lender_rk = lp.lender_rk
-        WHERE lp.account_no = @loan_account
-          AND ISNULL(lp.valid_flag,'Y') = 'Y' AND ISNULL(dl.valid_flag,'Y') = 'Y');
+        SELECT STRING_AGG(CONVERT(nvarchar(max), lf.full_name), ', ')
+        FROM dbo.lender_portfolio_full lpf
+        JOIN dbo.lender_full lf ON lf.lender_rk = lpf.lender_rk
+        WHERE lpf.account_no = @loan_account
+          AND lpf.file_date = @latest_file_date);
 
     -- selected lender (the one the ad-funding will go to)
     DECLARE @selected_lender_name varchar(255) = (
-        SELECT TOP 1 dl.full_name
-        FROM dbo.dim_lender dl
-        WHERE (dl.account_code = @lender_code OR dl.account_no = @lender_code)
-          AND ISNULL(dl.valid_flag,'Y') = 'Y');
+        SELECT TOP 1 lf.full_name
+        FROM dbo.lender_full lf
+        WHERE (lf.account_code = @lender_code OR lf.account_no = @lender_code)
+        ORDER BY lf.file_date DESC, lf.lender_rk DESC);
 
     -- parse the whole history response once
     DECLARE @all TABLE (
@@ -776,20 +780,21 @@ BEGIN
     ------------------------------------------------------------------
     -- Build the printable HTML report
     ------------------------------------------------------------------
-    -- lender rows
+    -- lender rows (from lender_portfolio_full, latest snapshot per loan)
     DECLARE @lender_rows nvarchar(max) =
     (
         SELECT STRING_AGG(CONVERT(nvarchar(max),
-              '<tr><td>' + ISNULL(dl.full_name,'') + '</td>'
-            + '<td>' + ISNULL(lp.lender_account_code,'') + '</td>'
-            + '<td class="num">' + ISNULL(CONVERT(varchar(20), lp.pct_owned),'') + '</td></tr>'), '')
-            WITHIN GROUP (ORDER BY dl.full_name)
-        FROM dbo.dim_lender_portfolio lp
-        JOIN dbo.dim_lender dl ON dl.lender_rk = lp.lender_rk
-        WHERE lp.account_no = @loan_account
-          AND ISNULL(lp.valid_flag,'Y') = 'Y' AND ISNULL(dl.valid_flag,'Y') = 'Y'
+              '<tr><td>' + ISNULL(lf.full_name,'') + '</td>'
+            + '<td>' + ISNULL(lpf.lender_account_code,'') + '</td>'
+            + '<td class="num">' + ISNULL(CONVERT(varchar(20), lpf.pct_owned),'') + '</td>'
+            + '<td>' + ISNULL(CONVERT(varchar(10), lpf.file_date, 23),'') + '</td></tr>'), '')
+            WITHIN GROUP (ORDER BY lpf.pct_owned DESC, lf.full_name)
+        FROM dbo.lender_portfolio_full lpf
+        JOIN dbo.lender_full lf ON lf.lender_rk = lpf.lender_rk
+        WHERE lpf.account_no = @loan_account
+          AND lpf.file_date = @latest_file_date
     );
-    IF @lender_rows IS NULL SET @lender_rows = '<tr><td colspan="3">No lenders found for this loan.</td></tr>';
+    IF @lender_rows IS NULL SET @lender_rows = '<tr><td colspan="4">No lenders found for this loan (lender_portfolio_full empty).</td></tr>';
 
     -- ALL fetched transactions; the ones in the effective month are highlighted
     DECLARE @hist_rows nvarchar(max) =
@@ -851,6 +856,62 @@ BEGIN
     );
     IF @new_rows IS NULL SET @new_rows = '<tr><td colspan="10">No transactions in this window &mdash; nothing to reverse or replay.</td></tr>';
 
+    -- API audit rows. Shows each call's URL, payload summary, and response.
+    -- Dry-run: response = "(dry-run, not called)". Real run: pulled from loan_history_replay_stage via LEFT JOIN on src_recid.
+    DECLARE @audit_rows nvarchar(max) =
+    (
+        SELECT STRING_AGG(CONVERT(nvarchar(max), row_html), '') WITHIN GROUP (ORDER BY ord, date_rec_key, src_recid_key)
+        FROM (
+            -- Phase 1 reversal calls (one per in-window txn)
+            SELECT 1 AS ord, p.date_rec AS date_rec_key, ISNULL(p.src_recid,'') AS src_recid_key,
+                   '<tr><td>Phase 1 reversal</td>'
+                 + '<td>POST /LSS.svc/AddLoanHistory</td>'
+                 + '<td>LoanAccount=' + p.loan_account + ', DateRec=' + CONVERT(varchar(10),p.date_rec,23)
+                 + ', To* negated, Total=' + CONVERT(varchar(30), p.reversal_amount) + '</td>'
+                 + '<td>' + CASE WHEN @dry_run = 1 OR s.reversal_status IS NULL
+                                 THEN '<span class="dim">(dry-run, not called)</span>'
+                                 ELSE 'status=' + ISNULL(s.reversal_status,'') +
+                                      ', recid=' + ISNULL(s.reversal_recid,'') END + '</td></tr>' AS row_html
+            FROM dbo.loan_history_preview p
+            LEFT JOIN dbo.loan_history_replay_stage s
+                   ON s.loan_account = p.loan_account AND s.src_recid = p.src_recid
+            WHERE p.loan_account = @loan_account AND p.in_effective_month = 1
+            UNION ALL
+            -- Phase 2 ad-funding call (exactly one)
+            SELECT 2 AS ord, NULL AS date_rec_key, '' AS src_recid_key,
+                   '<tr><td>Phase 2 ad-funding</td>'
+                 + '<td>POST /LSS.svc/AddFundings</td>'
+                 + '<td>[{LoanAccount=' + @loan_account + ', LenderAccount=' + ISNULL(@lender_code,'?')
+                 + ', TransDate=' + ISNULL(CONVERT(varchar(10), TRY_CONVERT(date,@effective_date), 23),'?')
+                 + ', Amount=' + CONVERT(varchar(30), @adfunding_amount) + '}]</td>'
+                 + '<td>' + CASE WHEN @dry_run = 1
+                                 THEN '<span class="dim">(dry-run, not called)</span>'
+                                 ELSE ISNULL((SELECT TOP 1 'status=' + ISNULL(adfund_status,'')
+                                              FROM dbo.loan_history_replay_stage
+                                              WHERE loan_account = @loan_account AND adfund_status IS NOT NULL
+                                              ORDER BY adfund_posted_on DESC),
+                                             '<span class="dim">no response captured</span>') END
+                 + '</td></tr>' AS row_html
+            UNION ALL
+            -- Phase 3 replay calls (one per in-window txn)
+            SELECT 3 AS ord, p.date_rec AS date_rec_key, ISNULL(p.src_recid,'') AS src_recid_key,
+                   '<tr><td>Phase 3 replay</td>'
+                 + '<td>POST /LSS.svc/AddLoanHistory</td>'
+                 + '<td>LoanAccount=' + p.loan_account + ', DateRec=' + CONVERT(varchar(10),p.date_rec,23)
+                 + ', To* original, Total=' + CONVERT(varchar(30), p.replay_amount) + '</td>'
+                 + '<td>' + CASE WHEN @dry_run = 1 OR s.replay_status IS NULL
+                                 THEN '<span class="dim">(dry-run, not called)</span>'
+                                 ELSE 'status=' + ISNULL(s.replay_status,'') +
+                                      ', recid=' + ISNULL(s.replay_recid,'') END + '</td></tr>' AS row_html
+            FROM dbo.loan_history_preview p
+            LEFT JOIN dbo.loan_history_replay_stage s
+                   ON s.loan_account = p.loan_account AND s.src_recid = p.src_recid
+            WHERE p.loan_account = @loan_account AND p.in_effective_month = 1
+        ) x
+    );
+    IF @audit_rows IS NULL SET @audit_rows = '<tr><td colspan="4">No transactions in window &mdash; no API calls planned.</td></tr>';
+    DECLARE @mode_label varchar(40) = CASE WHEN @dry_run = 1 THEN 'DRY RUN &mdash; no API calls were made' ELSE 'REAL RUN &mdash; API calls executed' END;
+
     DECLARE @html nvarchar(max) =
 N'<!DOCTYPE html><html><head><meta charset="utf-8"><title>Loan Preview ' + @loan_account + '</title>
 <style>
@@ -868,6 +929,7 @@ th{background:#f8fafc;text-transform:uppercase;font-size:11px;letter-spacing:.06
 td.num{text-align:right;font-variant-numeric:tabular-nums;}
 tr.sel td{background:#dcfce7;}
 tr.dim td{color:#94a3b8;}
+span.dim{color:#94a3b8;font-style:italic;}
 .neg{color:#b91c1c;font-weight:600;}
 .pos{color:#047857;font-weight:600;}
 .big{font-size:18px;font-weight:700;}
@@ -885,8 +947,8 @@ tr.dim td{color:#94a3b8;}
 <div class="kv"><span>Current principal balance</span><span class="v">' + ISNULL(CONVERT(varchar(30),@principal),'n/a') + '</span></div>
 </div>
 
-<div class="card"><h2>2 &middot; Lenders on this loan</h2>
-<table><thead><tr><th>Lender name</th><th>Lender account code</th><th>% owned</th></tr></thead>
+<div class="card"><h2>2 &middot; Lenders on this loan (latest snapshot from lender_portfolio_full)</h2>
+<table><thead><tr><th>Lender name</th><th>Lender account code</th><th>% owned</th><th>Snapshot date</th></tr></thead>
 <tbody>' + @lender_rows + '</tbody></table>
 </div>
 
@@ -945,7 +1007,15 @@ tr.dim td{color:#94a3b8;}
 <div class="legend">Informational &mdash; this is the lender''s share of each allocation type in the period. The actual ad-funding amount above is computed as the balance &times; pct (principal-based), not the sum of this table.</div>
 </div>
 
-<div class="sub">Preview only &mdash; no transactions were posted to TMO. The balance after reversals is indicative; TMO computes the authoritative figure when the entries are posted.</div>
+<div class="card"><h2>10 &middot; API audit &mdash; ' + @mode_label + '</h2>
+<table>
+<thead><tr><th>Phase</th><th>API</th><th>Payload (summary)</th><th>Response</th></tr></thead>
+<tbody>' + @audit_rows + '</tbody></table>
+<div class="legend">Each row is one HTTP call the pipeline would make (dry run) or did make (real run). For real runs, full responses are stored in loan_history_replay_stage.</div>
+</div>
+
+<div class="sub">' + CASE WHEN @dry_run = 1 THEN 'Preview only &mdash; no transactions were posted to TMO. The balance after reversals is indicative; TMO computes the authoritative figure when the entries are posted.'
+                       ELSE 'Real run &mdash; transactions were posted to TMO. See loan_history_replay_stage for the full audit (RecIDs, response bodies, timestamps).' END + '</div>
 </body></html>';
 
     UPDATE dbo.loan_history_preview_summary

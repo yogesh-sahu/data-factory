@@ -3,7 +3,7 @@
     "type": "Microsoft.DataFactory/factories/pipelines",
     "apiVersion": "2018-06-01",
     "properties": {
-        "description": "Dry-run preview. Enter loan_account + effective_date; fetches GetLoanHistory and GetLoan (read-only GETs, no POSTs), fills loan_history_preview / loan_history_preview_summary, and writes an HTML report to blob.",
+        "description": "Preview / dry-run pipeline. Takes loan_account + effective_date + lender_code + fund_percentage + dry_run. When dry_run is TRUE: only GETs are made; the HTML report shows what would be posted. When dry_run is FALSE: also reverses, ad-funds and replays for real via PL_CHILD_REVERSE_REPLAY_DEV, with API audit captured in loan_history_replay_stage.",
         "activities": [
             {
                 "name": "LOOKUP_API_CONFIG",
@@ -190,66 +190,282 @@
                     "scripts": [
                         {
                             "parameters": [
-                                {
-                                    "name": "loan_account",
-                                    "type": "String",
-                                    "value": {
-                                        "value": "@pipeline().parameters.loan_account",
-                                        "type": "Expression"
-                                    },
-                                    "direction": "Input"
-                                },
-                                {
-                                    "name": "effective_date",
-                                    "type": "String",
-                                    "value": {
-                                        "value": "@pipeline().parameters.effective_date",
-                                        "type": "Expression"
-                                    },
-                                    "direction": "Input"
-                                },
-                                {
-                                    "name": "api_response",
-                                    "type": "String",
-                                    "value": {
-                                        "value": "@variables('varjsonstring')",
-                                        "type": "Expression"
-                                    },
-                                    "direction": "Input"
-                                },
-                                {
-                                    "name": "lender_code",
-                                    "type": "String",
-                                    "value": {
-                                        "value": "@pipeline().parameters.lender_code",
-                                        "type": "Expression"
-                                    },
-                                    "direction": "Input"
-                                },
-                                {
-                                    "name": "fund_percentage",
-                                    "type": "String",
-                                    "value": {
-                                        "value": "@pipeline().parameters.fund_percentage",
-                                        "type": "Expression"
-                                    },
-                                    "direction": "Input"
-                                },
-                                {
-                                    "name": "loan_response",
-                                    "type": "String",
-                                    "value": {
-                                        "value": "@variables('varloanjson')",
-                                        "type": "Expression"
-                                    },
-                                    "direction": "Input"
-                                }
+                                { "name": "loan_account",     "type": "String",  "value": {"value":"@pipeline().parameters.loan_account","type":"Expression"},     "direction": "Input" },
+                                { "name": "effective_date",   "type": "String",  "value": {"value":"@pipeline().parameters.effective_date","type":"Expression"},   "direction": "Input" },
+                                { "name": "api_response",     "type": "String",  "value": {"value":"@variables('varjsonstring')","type":"Expression"},              "direction": "Input" },
+                                { "name": "lender_code",      "type": "String",  "value": {"value":"@pipeline().parameters.lender_code","type":"Expression"},      "direction": "Input" },
+                                { "name": "fund_percentage",  "type": "String",  "value": {"value":"@pipeline().parameters.fund_percentage","type":"Expression"},  "direction": "Input" },
+                                { "name": "loan_response",    "type": "String",  "value": {"value":"@variables('varloanjson')","type":"Expression"},                "direction": "Input" },
+                                { "name": "dry_run",          "type": "Boolean", "value": {"value":"@pipeline().parameters.dry_run","type":"Expression"},          "direction": "Input" }
                             ],
                             "type": "Query",
-                            "text": "EXEC dbo.pr_preview_load_loan_history @loan_account = @loan_account, @effective_date = @effective_date, @api_response = @api_response, @lender_code = @lender_code, @fund_percentage = @fund_percentage, @loan_response = @loan_response"
+                            "text": "EXEC dbo.pr_preview_load_loan_history @loan_account = @loan_account, @effective_date = @effective_date, @api_response = @api_response, @lender_code = @lender_code, @fund_percentage = @fund_percentage, @loan_response = @loan_response, @dry_run = @dry_run"
                         }
                     ],
                     "scriptBlockExecutionTimeout": "02:00:00"
+                }
+            },
+            {
+                "name": "IF_REAL_EXECUTE",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "SCR_BUILD_PREVIEW",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@not(pipeline().parameters.dry_run)",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "LOOKUP_ADFUND_CONFIG",
+                            "type": "Lookup",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureSqlSource",
+                                    "sqlReaderQuery": "SELECT TOP 1 (SELECT api_url FROM dbo.api_master WHERE api_code='POST_ADD_FUNDINGS' AND valid_flag='Y') AS adfund_url, (SELECT api_url FROM dbo.api_master WHERE api_code='POST_ADD_LOAN_HISTORY' AND valid_flag='Y') AS addloanhistory_url, JSON_VALUE(api_prop,'$.Header.Token') AS token, JSON_VALUE(api_prop,'$.Header.Database') AS dbase_name FROM dbo.api_master WHERE api_code='POST_ADD_FUNDINGS' AND valid_flag='Y'",
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "dataset": {
+                                    "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                    "type": "DatasetReference",
+                                    "parameters": {}
+                                },
+                                "firstRowOnly": true
+                            }
+                        },
+                        {
+                            "name": "LOOKUP_INIT_BATCH",
+                            "type": "Lookup",
+                            "dependsOn": [
+                                {
+                                    "activity": "LOOKUP_ADFUND_CONFIG",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureSqlSource",
+                                    "sqlReaderQuery": "EXEC dbo.pr_init_replay_batch",
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "dataset": {
+                                    "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                    "type": "DatasetReference",
+                                    "parameters": {}
+                                },
+                                "firstRowOnly": true
+                            }
+                        },
+                        {
+                            "name": "SCR_LOAD_REPLAY_STAGE",
+                            "type": "Script",
+                            "dependsOn": [
+                                {
+                                    "activity": "LOOKUP_INIT_BATCH",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "linkedServiceName": {
+                                "referenceName": "LS_AzureSql_CAL_DEV",
+                                "type": "LinkedServiceReference"
+                            },
+                            "typeProperties": {
+                                "scripts": [
+                                    {
+                                        "parameters": [
+                                            { "name": "loan_account",     "type": "String", "value": {"value":"@pipeline().parameters.loan_account","type":"Expression"},   "direction": "Input" },
+                                            { "name": "api_response",     "type": "String", "value": {"value":"@variables('varjsonstring')","type":"Expression"},             "direction": "Input" },
+                                            { "name": "replay_batch_id",  "type": "String", "value": {"value":"@activity('LOOKUP_INIT_BATCH').output.firstRow.replay_batch_id","type":"Expression"}, "direction": "Input" },
+                                            { "name": "effective_date",   "type": "String", "value": {"value":"@pipeline().parameters.effective_date","type":"Expression"}, "direction": "Input" }
+                                        ],
+                                        "type": "Query",
+                                        "text": "EXEC dbo.pr_load_loan_history_replay @loan_account = @loan_account, @api_response = @api_response, @replay_batch_id = @replay_batch_id, @effective_date = @effective_date"
+                                    }
+                                ],
+                                "scriptBlockExecutionTimeout": "02:00:00"
+                            }
+                        },
+                        {
+                            "name": "LOOKUP_PREVIEW_AMOUNT",
+                            "type": "Lookup",
+                            "dependsOn": [
+                                {
+                                    "activity": "SCR_LOAD_REPLAY_STAGE",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureSqlSource",
+                                    "sqlReaderQuery": {
+                                        "value": "SELECT TOP 1 CONVERT(varchar(30), phase2_adfunding_amount) AS adfunding_amount FROM dbo.loan_history_preview_summary WHERE loan_account = '@{pipeline().parameters.loan_account}'",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "dataset": {
+                                    "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                    "type": "DatasetReference",
+                                    "parameters": {}
+                                },
+                                "firstRowOnly": true
+                            }
+                        },
+                        {
+                            "name": "EXEC_REVERSE_REPLAY",
+                            "type": "ExecutePipeline",
+                            "dependsOn": [
+                                {
+                                    "activity": "LOOKUP_PREVIEW_AMOUNT",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "pipeline": {
+                                    "referenceName": "PL_CHILD_REVERSE_REPLAY_DEV",
+                                    "type": "PipelineReference"
+                                },
+                                "waitOnCompletion": true,
+                                "parameters": {
+                                    "loan_account": {
+                                        "value": "@pipeline().parameters.loan_account",
+                                        "type": "Expression"
+                                    },
+                                    "replay_batch_id": {
+                                        "value": "@activity('LOOKUP_INIT_BATCH').output.firstRow.replay_batch_id",
+                                        "type": "Expression"
+                                    },
+                                    "loan_history_post_url": {
+                                        "value": "@activity('LOOKUP_ADFUND_CONFIG').output.firstRow.addloanhistory_url",
+                                        "type": "Expression"
+                                    },
+                                    "loan_history_token": {
+                                        "value": "@activity('LOOKUP_ADFUND_CONFIG').output.firstRow.token",
+                                        "type": "Expression"
+                                    },
+                                    "loan_history_dbase": {
+                                        "value": "@activity('LOOKUP_ADFUND_CONFIG').output.firstRow.dbase_name",
+                                        "type": "Expression"
+                                    },
+                                    "api_url": {
+                                        "value": "@activity('LOOKUP_ADFUND_CONFIG').output.firstRow.adfund_url",
+                                        "type": "Expression"
+                                    },
+                                    "token": {
+                                        "value": "@activity('LOOKUP_ADFUND_CONFIG').output.firstRow.token",
+                                        "type": "Expression"
+                                    },
+                                    "dbase_name": {
+                                        "value": "@activity('LOOKUP_ADFUND_CONFIG').output.firstRow.dbase_name",
+                                        "type": "Expression"
+                                    },
+                                    "api_body": {
+                                        "value": "@concat('[{\"LoanAccount\":\"', pipeline().parameters.loan_account, '\",\"LenderAccount\":\"', pipeline().parameters.lender_code, '\",\"TransDate\":\"', formatDateTime(pipeline().parameters.effective_date, 'MM/dd/yyyy'), '\",\"Amount\":\"', activity('LOOKUP_PREVIEW_AMOUNT').output.firstRow.adfunding_amount, '\"}]')",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "name": "SCR_REBUILD_PREVIEW",
+                            "type": "Script",
+                            "dependsOn": [
+                                {
+                                    "activity": "EXEC_REVERSE_REPLAY",
+                                    "dependencyConditions": [
+                                        "Succeeded",
+                                        "Failed",
+                                        "Completed"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "linkedServiceName": {
+                                "referenceName": "LS_AzureSql_CAL_DEV",
+                                "type": "LinkedServiceReference"
+                            },
+                            "typeProperties": {
+                                "scripts": [
+                                    {
+                                        "parameters": [
+                                            { "name": "loan_account",    "type": "String",  "value": {"value":"@pipeline().parameters.loan_account","type":"Expression"},   "direction": "Input" },
+                                            { "name": "effective_date",  "type": "String",  "value": {"value":"@pipeline().parameters.effective_date","type":"Expression"}, "direction": "Input" },
+                                            { "name": "api_response",    "type": "String",  "value": {"value":"@variables('varjsonstring')","type":"Expression"},            "direction": "Input" },
+                                            { "name": "lender_code",     "type": "String",  "value": {"value":"@pipeline().parameters.lender_code","type":"Expression"},    "direction": "Input" },
+                                            { "name": "fund_percentage", "type": "String",  "value": {"value":"@pipeline().parameters.fund_percentage","type":"Expression"},"direction": "Input" },
+                                            { "name": "loan_response",   "type": "String",  "value": {"value":"@variables('varloanjson')","type":"Expression"},               "direction": "Input" },
+                                            { "name": "dry_run",         "type": "Boolean", "value": {"value":"@bool('false')","type":"Expression"},                          "direction": "Input" }
+                                        ],
+                                        "type": "Query",
+                                        "text": "EXEC dbo.pr_preview_load_loan_history @loan_account = @loan_account, @effective_date = @effective_date, @api_response = @api_response, @lender_code = @lender_code, @fund_percentage = @fund_percentage, @loan_response = @loan_response, @dry_run = @dry_run"
+                                    }
+                                ],
+                                "scriptBlockExecutionTimeout": "02:00:00"
+                            }
+                        }
+                    ]
                 }
             },
             {
@@ -257,7 +473,7 @@
                 "type": "Copy",
                 "dependsOn": [
                     {
-                        "activity": "SCR_BUILD_PREVIEW",
+                        "activity": "IF_REAL_EXECUTE",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
@@ -313,7 +529,7 @@
                         "type": "DatasetReference",
                         "parameters": {
                             "report_file_name": {
-                                "value": "@concat('loan_preview_', pipeline().parameters.loan_account, '_', formatDateTime(utcNow(), 'yyyyMMdd_HHmmss'), '.html')",
+                                "value": "@concat('loan_preview_', pipeline().parameters.loan_account, '_', formatDateTime(utcNow(), 'yyyyMMdd_HHmmss'), if(pipeline().parameters.dry_run, '_dry', '_real'), '.html')",
                                 "type": "Expression"
                             }
                         }
@@ -325,7 +541,7 @@
                 "type": "Lookup",
                 "dependsOn": [
                     {
-                        "activity": "SCR_BUILD_PREVIEW",
+                        "activity": "COPY_WRITE_REPORT",
                         "dependencyConditions": [
                             "Succeeded"
                         ]
@@ -343,7 +559,7 @@
                     "source": {
                         "type": "AzureSqlSource",
                         "sqlReaderQuery": {
-                            "value": "SELECT loan_account, borrower_name, effective_month, original_loan_amount, current_principal_balance, total_history_fetched, transactions_in_month, reversal_negative_posts, reversal_negative_amount, reversal_positive_posts, reversal_positive_amount, balance_after_reversal, phase2_adfunding_amount, replay_positive_posts, replay_negative_posts FROM dbo.loan_history_preview_summary WHERE loan_account = '@{pipeline().parameters.loan_account}'",
+                            "value": "SELECT loan_account, borrower_name, lender_count, lender_names, selected_lender_name, effective_month, original_loan_amount, current_principal_balance, total_history_fetched, transactions_in_month, reversal_negative_posts, reversal_negative_amount, reversal_positive_posts, reversal_positive_amount, balance_after_reversal, fund_percentage, phase2_adfunding_amount, adfund_principal_share, adfund_interest_share, replay_positive_posts, replay_negative_posts FROM dbo.loan_history_preview_summary WHERE loan_account = '@{pipeline().parameters.loan_account}'",
                             "type": "Expression"
                         },
                         "queryTimeout": "02:00:00",
@@ -380,7 +596,7 @@
                     "source": {
                         "type": "AzureSqlSource",
                         "sqlReaderQuery": {
-                            "value": "SELECT preview_id, loan_account, effective_month, date_rec, source_app, pay_method, total_amount, reversal_amount, replay_amount, direction FROM dbo.loan_history_preview WHERE loan_account = '@{pipeline().parameters.loan_account}' ORDER BY date_rec, preview_id",
+                            "value": "SELECT preview_id, loan_account, effective_month, in_effective_month, date_rec, source_app, pay_method, total_amount, reversal_amount, replay_amount, direction FROM dbo.loan_history_preview WHERE loan_account = '@{pipeline().parameters.loan_account}' ORDER BY date_rec, preview_id",
                             "type": "Expression"
                         },
                         "queryTimeout": "02:00:00",
@@ -411,6 +627,10 @@
             "fund_percentage": {
                 "type": "string",
                 "defaultValue": "1.00"
+            },
+            "dry_run": {
+                "type": "bool",
+                "defaultValue": true
             }
         },
         "variables": {
@@ -429,6 +649,7 @@
     "dependsOn": [
         "[concat(variables('factoryId'), '/datasets/DS_AZURE_SQL_CAL_DEV')]",
         "[concat(variables('factoryId'), '/datasets/DS_PREVIEW_REPORT_DEV')]",
-        "[concat(variables('factoryId'), '/linkedServices/LS_AzureSql_CAL_DEV')]"
+        "[concat(variables('factoryId'), '/linkedServices/LS_AzureSql_CAL_DEV')]",
+        "[concat(variables('factoryId'), '/pipelines/PL_CHILD_REVERSE_REPLAY_DEV')]"
     ]
 }
