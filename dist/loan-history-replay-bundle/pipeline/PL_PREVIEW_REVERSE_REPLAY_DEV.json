@@ -329,7 +329,7 @@
                             "typeProperties": {
                                 "source": {
                                     "type": "AzureSqlSource",
-                                    "sqlReaderQuery": "SELECT TOP 1 (SELECT api_url FROM dbo.api_master WHERE api_code='POST_ADD_FUNDINGS' AND valid_flag='Y') AS adfund_url, (SELECT api_url FROM dbo.api_master WHERE api_code='POST_ADD_LOAN_HISTORY' AND valid_flag='Y') AS addloanhistory_url, JSON_VALUE(api_prop,'$.Header.Token') AS token, JSON_VALUE(api_prop,'$.Header.Database') AS dbase_name FROM dbo.api_master WHERE api_code='POST_ADD_FUNDINGS' AND valid_flag='Y'",
+                                    "sqlReaderQuery": "SELECT TOP 1 (SELECT api_url FROM dbo.api_master WHERE api_code='POST_ADD_FUNDINGS' AND valid_flag='Y') AS adfund_url, (SELECT api_url FROM dbo.api_master WHERE api_code='POST_ADD_LOAN_HISTORY' AND valid_flag='Y') AS addloanhistory_url, REPLACE((SELECT api_url FROM dbo.api_master WHERE api_code='GET_LOAN_BY_AN' AND valid_flag='Y'), '#ACCOUNT_NO', '@{pipeline().parameters.loan_account}') AS getloan_url, JSON_VALUE(api_prop,'$.Header.Token') AS token, JSON_VALUE(api_prop,'$.Header.Database') AS dbase_name FROM dbo.api_master WHERE api_code='POST_ADD_FUNDINGS' AND valid_flag='Y'",
                                     "queryTimeout": "02:00:00",
                                     "partitionOption": "None"
                                 },
@@ -539,6 +539,26 @@
                                     },
                                     "api_body": {
                                         "value": "@activity('LOOKUP_PREVIEW_AMOUNT').output.firstRow.transfer_api_body",
+                                        "type": "Expression"
+                                    },
+                                    "rebuild_transfer_body": {
+                                        "value": "@bool('true')",
+                                        "type": "Expression"
+                                    },
+                                    "getloan_url": {
+                                        "value": "@activity('LOOKUP_ADFUND_CONFIG').output.firstRow.getloan_url",
+                                        "type": "Expression"
+                                    },
+                                    "lender_code": {
+                                        "value": "@pipeline().parameters.lender_code",
+                                        "type": "Expression"
+                                    },
+                                    "fund_percentage": {
+                                        "value": "@pipeline().parameters.fund_percentage",
+                                        "type": "Expression"
+                                    },
+                                    "effective_date": {
+                                        "value": "@pipeline().parameters.effective_date",
                                         "type": "Expression"
                                     }
                                 }

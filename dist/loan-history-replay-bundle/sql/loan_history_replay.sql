@@ -1153,3 +1153,88 @@ BEGIN
        AND is_processed = 0;
 END;
 GO
+
+
+------------------------------------------------------------
+-- 15. pr_build_transfer_body_live — rebuild the transfer body
+--     from the loan's LIVE balance, read AFTER the reversals are
+--     posted. Used by PL_CHILD_REVERSE_REPLAY_DEV between the
+--     reversal phase and the ad-funding call so the debit legs are
+--     sized off TMO's MEASURED post-reversal position, not a model.
+--
+--     One +credit leg to the new lender (@lender_code) and one
+--     -debit leg per current lender (lender_portfolio_full latest
+--     snapshot, destination excluded), each = live_balance *
+--     pct_owned/100 * fund_pct/100. Positive = sum of debits -> net 0.
+------------------------------------------------------------
+IF OBJECT_ID('dbo.pr_build_transfer_body_live', 'P') IS NOT NULL
+    DROP PROCEDURE dbo.pr_build_transfer_body_live;
+GO
+CREATE PROCEDURE dbo.pr_build_transfer_body_live
+    @loan_account     varchar(50),
+    @lender_code      varchar(50),
+    @fund_percentage  decimal(9,4),
+    @effective_date   varchar(20),
+    @loan_response    nvarchar(max)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- LIVE principal balance, measured AFTER the reversals were posted
+    DECLARE @live_balance decimal(18,4) = TRY_CONVERT(decimal(18,4), COALESCE(
+        JSON_VALUE(@loan_response, '$.Data.Terms.PrincipalBalance'),
+        JSON_VALUE(@loan_response, '$.Data[0].Terms.PrincipalBalance')));
+    DECLARE @pct_frac   decimal(18,8) = ISNULL(@fund_percentage, 0) / 100.0;
+    DECLARE @trans_date varchar(10)   = FORMAT(TRY_CONVERT(date, @effective_date), 'MM/dd/yyyy');
+    DECLARE @latest     date          = (SELECT MAX(file_date) FROM dbo.lender_portfolio_full
+                                          WHERE account_no = @loan_account);
+
+    DECLARE @neg_legs nvarchar(max), @neg_total decimal(18,4), @neg_count int;
+
+    ;WITH cur AS (
+        SELECT lpf.lender_account_code AS lac,
+               CAST(@live_balance * ISNULL(lpf.pct_owned,0) / 100.0 * @pct_frac AS decimal(18,4)) AS leg_amt
+        FROM dbo.lender_portfolio_full lpf
+        WHERE lpf.account_no   = @loan_account
+          AND lpf.file_date    = @latest
+          AND lpf.lender_account_code <> @lender_code
+          AND ISNULL(lpf.pct_owned,0) > 0
+    )
+    SELECT
+        @neg_count = COUNT(*),
+        @neg_total = ISNULL(SUM(leg_amt), 0),
+        @neg_legs  = STRING_AGG(CONVERT(nvarchar(max),
+            '{"LoanAccount":"' + @loan_account + '",'
+          + '"LenderAccount":"' + lac + '",'
+          + '"TransDate":"' + @trans_date + '",'
+          + '"Amount":"' + CONVERT(varchar(30), -leg_amt) + '"}'), ',')
+    FROM cur;
+
+    DECLARE @pos_leg nvarchar(max) =
+        '{"LoanAccount":"' + @loan_account + '",'
+      + '"LenderAccount":"' + ISNULL(@lender_code,'') + '",'
+      + '"TransDate":"' + @trans_date + '",'
+      + '"Amount":"' + CONVERT(varchar(30), ISNULL(@neg_total,0)) + '"}';
+
+    DECLARE @body nvarchar(max) =
+        '[' + @pos_leg
+        + CASE WHEN @neg_legs IS NULL OR @neg_legs = '' THEN '' ELSE ',' + @neg_legs END
+        + ']';
+
+    -- refresh the summary so the report reflects the measured numbers
+    UPDATE dbo.loan_history_preview_summary
+       SET transfer_api_body      = @body,
+           current_principal_balance = @live_balance,
+           balance_after_reversal = @live_balance,         -- now MEASURED, not modeled
+           phase2_adfunding_amount = ISNULL(@neg_total,0),
+           transfer_gross_moved   = ISNULL(@neg_total,0),
+           transfer_leg_count     = 1 + ISNULL(@neg_count,0),
+           transfer_net_amount    = 0
+     WHERE loan_account = @loan_account;
+
+    -- return the body for the pipeline Lookup that follows
+    SELECT @body AS transfer_api_body,
+           ISNULL(@neg_total,0) AS transfer_gross_moved,
+           1 + ISNULL(@neg_count,0) AS transfer_leg_count;
+END;
+GO

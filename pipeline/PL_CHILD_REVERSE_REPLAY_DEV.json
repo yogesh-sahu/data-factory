@@ -199,14 +199,248 @@
                 }
             },
             {
-                "name": "EXEC_PL_CHILD_POST_ADD_FUNDINGS_DEV",
-                "type": "ExecutePipeline",
+                "name": "IF_REBUILD_BODY",
+                "type": "IfCondition",
                 "dependsOn": [
                     {
                         "activity": "ForEach_Reverse",
                         "dependencyConditions": [
-                            "Succeeded",
-                            "Completed"
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@pipeline().parameters.rebuild_transfer_body",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "CALL_GET_LOAN_LIVE",
+                            "type": "WebActivity",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 3,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "method": "GET",
+                                "headers": {
+                                    "Token": {
+                                        "value": "@pipeline().parameters.token",
+                                        "type": "Expression"
+                                    },
+                                    "Database": {
+                                        "value": "@pipeline().parameters.dbase_name",
+                                        "type": "Expression"
+                                    }
+                                },
+                                "url": {
+                                    "value": "@pipeline().parameters.getloan_url",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "SET_VAR_LOANJSON",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "CALL_GET_LOAN_LIVE",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "varloanjson",
+                                "value": {
+                                    "value": "@string(concat('{','\"Data\":', string(activity('CALL_GET_LOAN_LIVE').output.Data), ',','\"Status\":', string(activity('CALL_GET_LOAN_LIVE').output.Status),'}'))",
+                                    "type": "Expression"
+                                }
+                            }
+                        },
+                        {
+                            "name": "SCR_REBUILD_BODY",
+                            "type": "Script",
+                            "dependsOn": [
+                                {
+                                    "activity": "SET_VAR_LOANJSON",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "linkedServiceName": {
+                                "referenceName": "LS_AzureSql_CAL_DEV",
+                                "type": "LinkedServiceReference"
+                            },
+                            "typeProperties": {
+                                "scripts": [
+                                    {
+                                        "parameters": [
+                                            {
+                                                "name": "loan_account",
+                                                "type": "String",
+                                                "value": {
+                                                    "value": "@pipeline().parameters.loan_account",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            },
+                                            {
+                                                "name": "lender_code",
+                                                "type": "String",
+                                                "value": {
+                                                    "value": "@pipeline().parameters.lender_code",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            },
+                                            {
+                                                "name": "fund_percentage",
+                                                "type": "String",
+                                                "value": {
+                                                    "value": "@pipeline().parameters.fund_percentage",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            },
+                                            {
+                                                "name": "effective_date",
+                                                "type": "String",
+                                                "value": {
+                                                    "value": "@pipeline().parameters.effective_date",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            },
+                                            {
+                                                "name": "loan_response",
+                                                "type": "String",
+                                                "value": {
+                                                    "value": "@variables('varloanjson')",
+                                                    "type": "Expression"
+                                                },
+                                                "direction": "Input"
+                                            }
+                                        ],
+                                        "type": "Query",
+                                        "text": "EXEC dbo.pr_build_transfer_body_live @loan_account = @loan_account, @lender_code = @lender_code, @fund_percentage = @fund_percentage, @effective_date = @effective_date, @loan_response = @loan_response"
+                                    }
+                                ],
+                                "scriptBlockExecutionTimeout": "02:00:00"
+                            }
+                        },
+                        {
+                            "name": "LOOKUP_REBUILT_BODY",
+                            "type": "Lookup",
+                            "dependsOn": [
+                                {
+                                    "activity": "SCR_REBUILD_BODY",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureSqlSource",
+                                    "sqlReaderQuery": {
+                                        "value": "SELECT TOP 1 transfer_api_body FROM dbo.loan_history_preview_summary WHERE loan_account = '@{pipeline().parameters.loan_account}'",
+                                        "type": "Expression"
+                                    },
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "dataset": {
+                                    "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                    "type": "DatasetReference",
+                                    "parameters": {}
+                                },
+                                "firstRowOnly": true
+                            }
+                        },
+                        {
+                            "name": "SET_VAR_EFFECTIVE_REBUILT",
+                            "type": "SetVariable",
+                            "dependsOn": [
+                                {
+                                    "activity": "LOOKUP_REBUILT_BODY",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "effective_api_body",
+                                "value": {
+                                    "value": "@activity('LOOKUP_REBUILT_BODY').output.firstRow.transfer_api_body",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    ],
+                    "ifFalseActivities": [
+                        {
+                            "name": "SET_VAR_EFFECTIVE_PASSTHRU",
+                            "type": "SetVariable",
+                            "dependsOn": [],
+                            "policy": {
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "variableName": "effective_api_body",
+                                "value": {
+                                    "value": "@pipeline().parameters.api_body",
+                                    "type": "Expression"
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                "name": "EXEC_PL_CHILD_POST_ADD_FUNDINGS_DEV",
+                "type": "ExecutePipeline",
+                "dependsOn": [
+                    {
+                        "activity": "IF_REBUILD_BODY",
+                        "dependencyConditions": [
+                            "Succeeded"
                         ]
                     }
                 ],
@@ -238,7 +472,7 @@
                             "type": "Expression"
                         },
                         "api_body": {
-                            "value": "@pipeline().parameters.api_body",
+                            "value": "@variables('effective_api_body')",
                             "type": "Expression"
                         }
                     }
@@ -589,12 +823,40 @@
             },
             "api_body": {
                 "type": "string"
+            },
+            "rebuild_transfer_body": {
+                "type": "bool",
+                "defaultValue": false
+            },
+            "getloan_url": {
+                "type": "string",
+                "defaultValue": ""
+            },
+            "lender_code": {
+                "type": "string",
+                "defaultValue": ""
+            },
+            "fund_percentage": {
+                "type": "string",
+                "defaultValue": "0"
+            },
+            "effective_date": {
+                "type": "string",
+                "defaultValue": ""
             }
         },
         "folder": {
             "name": "CAL_DEV"
         },
-        "annotations": []
+        "annotations": [],
+        "variables": {
+            "varloanjson": {
+                "type": "String"
+            },
+            "effective_api_body": {
+                "type": "String"
+            }
+        }
     },
     "dependsOn": [
         "[concat(variables('factoryId'), '/datasets/DS_AZURE_SQL_CAL_DEV')]",
