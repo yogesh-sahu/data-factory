@@ -603,6 +603,10 @@ CREATE TABLE dbo.loan_history_preview_summary (
     replay_positive_amount    decimal(18,4) NULL,
     replay_negative_posts     int           NULL,
     replay_negative_amount    decimal(18,4) NULL,
+    transfer_api_body         nvarchar(max) NULL,   -- full multi-leg AddFundings body (transfer)
+    transfer_leg_count        int           NULL,   -- 1 positive + N negative legs
+    transfer_gross_moved      decimal(18,4) NULL,   -- total $ moved (sum of debits)
+    transfer_net_amount       decimal(18,4) NULL,   -- should be ~0 (legs net out)
     report_html               nvarchar(max) NULL,   -- printable HTML report
     previewed_on              datetime      NOT NULL DEFAULT GETDATE()
 );
@@ -654,20 +658,21 @@ BEGIN
         JSON_VALUE(@loan_response, '$.Data.ByLastName'),
         JSON_VALUE(@loan_response, '$.Data[0].ByLastName'), '');
 
-    -- lenders for this loan (from lender_portfolio_full, latest snapshot)
+    -- lenders for this loan (from lender_portfolio_full, latest snapshot).
+    -- Join on lender_account_code (lender_rk is 0 in the *_full tables, so unusable).
     DECLARE @latest_file_date date = (
         SELECT MAX(file_date) FROM dbo.lender_portfolio_full
         WHERE account_no = @loan_account);
     DECLARE @lender_count int = (
         SELECT COUNT(*)
         FROM dbo.lender_portfolio_full lpf
-        JOIN dbo.lender_full lf ON lf.lender_rk = lpf.lender_rk
+        LEFT JOIN dbo.lender_full lf ON lf.account_code = lpf.lender_account_code
         WHERE lpf.account_no = @loan_account
           AND lpf.file_date = @latest_file_date);
     DECLARE @lender_names nvarchar(max) = (
-        SELECT STRING_AGG(CONVERT(nvarchar(max), lf.full_name), ', ')
+        SELECT STRING_AGG(CONVERT(nvarchar(max), ISNULL(lf.full_name, lpf.lender_account_code)), ', ')
         FROM dbo.lender_portfolio_full lpf
-        JOIN dbo.lender_full lf ON lf.lender_rk = lpf.lender_rk
+        LEFT JOIN dbo.lender_full lf ON lf.account_code = lpf.lender_account_code
         WHERE lpf.account_no = @loan_account
           AND lpf.file_date = @latest_file_date);
 
@@ -740,15 +745,81 @@ BEGIN
     -- reversing the month's payments adds the principal they paid down back on
     DECLARE @bal_after decimal(18,4) = ISNULL(@principal, 0) + ISNULL(@net_principal, 0);
 
-    -- auto-computed ad-funding amount and per-allocation share
+    -- auto-computed ad-funding amount and per-allocation share.
+    -- @pct is a PERCENT (e.g. 100 = 100%, 93.75 = 93.75%); divide by 100 for the multiplier.
     DECLARE @pct decimal(9,4) = ISNULL(@fund_percentage, 0);
-    DECLARE @adfunding_amount decimal(18,4) = @bal_after * @pct;
-    DECLARE @share_prin decimal(18,4) = @net_principal * @pct;
-    DECLARE @share_int  decimal(18,4) = @w_int        * @pct;
-    DECLARE @share_lc   decimal(18,4) = @w_lc         * @pct;
-    DECLARE @share_lf   decimal(18,4) = @w_lf         * @pct;
-    DECLARE @share_imp  decimal(18,4) = @w_imp        * @pct;
-    DECLARE @share_oth  decimal(18,4) = @w_oth        * @pct;
+    DECLARE @pct_frac decimal(18,8) = @pct / 100.0;
+    DECLARE @adfunding_amount decimal(18,4) = @bal_after * @pct_frac;
+    DECLARE @share_prin decimal(18,4) = @net_principal * @pct_frac;
+    DECLARE @share_int  decimal(18,4) = @w_int        * @pct_frac;
+    DECLARE @share_lc   decimal(18,4) = @w_lc         * @pct_frac;
+    DECLARE @share_lf   decimal(18,4) = @w_lf         * @pct_frac;
+    DECLARE @share_imp  decimal(18,4) = @w_imp        * @pct_frac;
+    DECLARE @share_oth  decimal(18,4) = @w_oth        * @pct_frac;
+
+    ------------------------------------------------------------------
+    -- Build the multi-leg TRANSFER body for AddFundings.
+    --   + one POSITIVE leg to the new lender (@lender_code)
+    --   - one NEGATIVE leg per CURRENT lender on the loan
+    --     (from lender_portfolio_full latest snapshot), each =
+    --     that lender's position (@bal_after * pct_owned/100) * fund_pct.
+    -- The positive leg equals the sum of the debits, so the legs net to
+    -- ~0 -> the loan total is unchanged (a transfer, not an add).
+    -- The destination lender is excluded from the debits (never debit the receiver).
+    ------------------------------------------------------------------
+    DECLARE @trans_date varchar(10) = FORMAT(@m_start, 'MM/dd/yyyy');
+    DECLARE @neg_legs nvarchar(max), @neg_total decimal(18,4), @neg_count int;
+
+    ;WITH cur AS (
+        SELECT lpf.lender_account_code AS lac,
+               CAST(@bal_after * ISNULL(lpf.pct_owned,0) / 100.0 * @pct_frac AS decimal(18,4)) AS leg_amt
+        FROM dbo.lender_portfolio_full lpf
+        WHERE lpf.account_no   = @loan_account
+          AND lpf.file_date    = @latest_file_date
+          AND lpf.lender_account_code <> @lender_code     -- don't debit the receiver
+          AND ISNULL(lpf.pct_owned,0) > 0
+    )
+    SELECT
+        @neg_count = COUNT(*),
+        @neg_total = ISNULL(SUM(leg_amt), 0),
+        @neg_legs  = STRING_AGG(CONVERT(nvarchar(max),
+            '{"LoanAccount":"' + @loan_account + '",'
+          + '"LenderAccount":"' + lac + '",'
+          + '"TransDate":"' + @trans_date + '",'
+          + '"Amount":"' + CONVERT(varchar(30), -leg_amt) + '"}'), ',')
+    FROM cur;
+
+    -- positive leg to the new lender = sum of the debited positions (guarantees net zero)
+    DECLARE @pos_leg nvarchar(max) =
+        '{"LoanAccount":"' + @loan_account + '",'
+      + '"LenderAccount":"' + ISNULL(@lender_code,'') + '",'
+      + '"TransDate":"' + @trans_date + '",'
+      + '"Amount":"' + CONVERT(varchar(30), ISNULL(@neg_total,0)) + '"}';
+
+    DECLARE @transfer_api_body nvarchar(max) =
+        '[' + @pos_leg
+        + CASE WHEN @neg_legs IS NULL OR @neg_legs = '' THEN '' ELSE ',' + @neg_legs END
+        + ']';
+    DECLARE @transfer_leg_count int = 1 + ISNULL(@neg_count, 0);
+    DECLARE @transfer_gross_moved decimal(18,4) = ISNULL(@neg_total, 0);
+    DECLARE @transfer_net_amount  decimal(18,4) = ISNULL(@neg_total,0) - ISNULL(@neg_total,0); -- 0 by construction
+
+    -- HTML rows for the transfer-legs table in the report
+    DECLARE @transfer_rows nvarchar(max) =
+        '<tr><td>RECEIVE (+)</td><td>' + ISNULL(@lender_code,'') + '</td>'
+        + '<td>' + ISNULL(@selected_lender_name,'<span class="dim">(new lender)</span>') + '</td>'
+        + '<td class="num pos">' + CONVERT(varchar(30), ISNULL(@neg_total,0)) + '</td></tr>'
+        + ISNULL((
+            SELECT STRING_AGG(CONVERT(nvarchar(max),
+                  '<tr><td>DEBIT (&minus;)</td><td>' + lpf.lender_account_code + '</td>'
+                + '<td>' + ISNULL(lf.full_name, ISNULL(lpf.borrower_name,'')) + '</td>'
+                + '<td class="num neg">' + CONVERT(varchar(30),
+                    -CAST(@bal_after * ISNULL(lpf.pct_owned,0)/100.0 * @pct_frac AS decimal(18,4))) + '</td></tr>'),'')
+            FROM dbo.lender_portfolio_full lpf
+            LEFT JOIN dbo.lender_full lf ON lf.account_code = lpf.lender_account_code
+            WHERE lpf.account_no = @loan_account AND lpf.file_date = @latest_file_date
+              AND lpf.lender_account_code <> @lender_code AND ISNULL(lpf.pct_owned,0) > 0
+        ), '');
 
     INSERT INTO dbo.loan_history_preview_summary
         (loan_account, borrower_name, lender_count, lender_names, effective_month,
@@ -762,7 +833,8 @@ BEGIN
          adfund_principal_share, adfund_interest_share, adfund_late_charge_share,
          adfund_lender_fee_share, adfund_impound_share, adfund_other_share,
          phase3_replay_posts, replay_positive_posts, replay_positive_amount,
-         replay_negative_posts, replay_negative_amount)
+         replay_negative_posts, replay_negative_amount,
+         transfer_api_body, transfer_leg_count, transfer_gross_moved, transfer_net_amount)
     VALUES
         (@loan_account, @borrower, @lender_count, @lender_names, @month_label,
          @orig_bal, @principal,
@@ -775,7 +847,8 @@ BEGIN
          @share_prin, @share_int, @share_lc,
          @share_lf, @share_imp, @share_oth,
          @n, @rep_pos_n, @rep_pos_amt,
-         @rep_neg_n, @rep_neg_amt);
+         @rep_neg_n, @rep_neg_amt,
+         @transfer_api_body, @transfer_leg_count, @transfer_gross_moved, @transfer_net_amount);
 
     ------------------------------------------------------------------
     -- Build the printable HTML report
@@ -784,17 +857,20 @@ BEGIN
     DECLARE @lender_rows nvarchar(max) =
     (
         SELECT STRING_AGG(CONVERT(nvarchar(max),
-              '<tr><td>' + ISNULL(lf.full_name,'') + '</td>'
+              '<tr><td>' + ISNULL(lf.full_name, '<span class="dim">(name not in lender_full)</span>') + '</td>'
             + '<td>' + ISNULL(lpf.lender_account_code,'') + '</td>'
+            + '<td>' + ISNULL(lpf.borrower_name,'') + '</td>'
             + '<td class="num">' + ISNULL(CONVERT(varchar(20), lpf.pct_owned),'') + '</td>'
+            + '<td class="num">' + ISNULL(CONVERT(varchar(30), CONVERT(decimal(18,2), ISNULL(@principal,0) * lpf.pct_owned / 100.0)),'') + '</td>'
+            + '<td class="num">' + ISNULL(CONVERT(varchar(20), lpf.loan_balance),'') + '</td>'
             + '<td>' + ISNULL(CONVERT(varchar(10), lpf.file_date, 23),'') + '</td></tr>'), '')
-            WITHIN GROUP (ORDER BY lpf.pct_owned DESC, lf.full_name)
+            WITHIN GROUP (ORDER BY lpf.pct_owned DESC, lpf.lender_account_code)
         FROM dbo.lender_portfolio_full lpf
-        JOIN dbo.lender_full lf ON lf.lender_rk = lpf.lender_rk
+        LEFT JOIN dbo.lender_full lf ON lf.account_code = lpf.lender_account_code
         WHERE lpf.account_no = @loan_account
           AND lpf.file_date = @latest_file_date
     );
-    IF @lender_rows IS NULL SET @lender_rows = '<tr><td colspan="4">No lenders found for this loan (lender_portfolio_full empty).</td></tr>';
+    IF @lender_rows IS NULL SET @lender_rows = '<tr><td colspan="7">No lenders found for this loan (lender_portfolio_full empty for this account_no).</td></tr>';
 
     -- ALL fetched transactions; the ones in the effective month are highlighted
     DECLARE @hist_rows nvarchar(max) =
@@ -877,13 +953,11 @@ BEGIN
                    ON s.loan_account = p.loan_account AND s.src_recid = p.src_recid
             WHERE p.loan_account = @loan_account AND p.in_effective_month = 1
             UNION ALL
-            -- Phase 2 ad-funding call (exactly one)
+            -- Phase 2 ad-funding call (exactly one, multi-leg transfer body)
             SELECT 2 AS ord, NULL AS date_rec_key, '' AS src_recid_key,
-                   '<tr><td>Phase 2 ad-funding</td>'
+                   '<tr><td>Phase 2 ad-funding (transfer, ' + CONVERT(varchar(10), @transfer_leg_count) + ' legs)</td>'
                  + '<td>POST /LSS.svc/AddFundings</td>'
-                 + '<td>[{LoanAccount=' + @loan_account + ', LenderAccount=' + ISNULL(@lender_code,'?')
-                 + ', TransDate=' + ISNULL(CONVERT(varchar(10), TRY_CONVERT(date,@effective_date), 23),'?')
-                 + ', Amount=' + CONVERT(varchar(30), @adfunding_amount) + '}]</td>'
+                 + '<td>' + @transfer_api_body + '</td>'
                  + '<td>' + CASE WHEN @dry_run = 1
                                  THEN '<span class="dim">(dry-run, not called)</span>'
                                  ELSE ISNULL((SELECT TOP 1 'status=' + ISNULL(adfund_status,'')
@@ -948,8 +1022,9 @@ span.dim{color:#94a3b8;font-style:italic;}
 </div>
 
 <div class="card"><h2>2 &middot; Lenders on this loan (latest snapshot from lender_portfolio_full)</h2>
-<table><thead><tr><th>Lender name</th><th>Lender account code</th><th>% owned</th><th>Snapshot date</th></tr></thead>
+<table><thead><tr><th>Lender name</th><th>Lender account code</th><th>Borrower (from snapshot)</th><th>% owned</th><th>Funded = balance &times; pct</th><th>Snapshot loan balance</th><th>Snapshot date</th></tr></thead>
 <tbody>' + @lender_rows + '</tbody></table>
+<div class="legend">"Funded = balance &times; pct" uses the loan''s current principal balance &times; each lender''s % &mdash; this should match the lender''s Principal Balance in the TMO funding screen.</div>
 </div>
 
 <div class="card"><h2>3 &middot; History fetched</h2>
@@ -985,12 +1060,18 @@ span.dim{color:#94a3b8;font-style:italic;}
 <div class="kv"><span>Indicative balance after reversals</span><span class="v big">' + ISNULL(CONVERT(varchar(30),@bal_after),'n/a') + '</span></div>
 </div>
 
-<div class="card"><h2>8 &middot; Ad-funding the lender</h2>
-<div class="kv"><span>Lender code</span><span class="v">' + ISNULL(@lender_code,'n/a') + '</span></div>
-<div class="kv"><span>Lender name (from DW)</span><span class="v">' + ISNULL(@selected_lender_name,'not found in dim_lender') + '</span></div>
-<div class="kv"><span>Fund percentage</span><span class="v">' + CONVERT(varchar(30),@pct) + '</span></div>
+<div class="card"><h2>8 &middot; Ad-funding the lender (TRANSFER)</h2>'
++ CASE WHEN ISNULL(@neg_count,0) = 0 THEN
+    '<div class="kv"><span class="neg">&#9888; NO TRANSFER WILL BE POSTED</span><span class="v neg">no current lenders found in lender_portfolio_full to debit (or the only lender IS the destination). A real run is SKIPPED to avoid posting a spurious one-sided funding.</span></div>'
+  ELSE '' END
++ '<div class="kv"><span>New lender (receives)</span><span class="v">' + ISNULL(@lender_code,'n/a') + ' &mdash; ' + ISNULL(@selected_lender_name,'(new)') + '</span></div>
+<div class="kv"><span>Fund percentage of each position moved</span><span class="v">' + CONVERT(varchar(30),@pct) + '%</span></div>
 <div class="kv"><span>Balance the ad-funding sees</span><span class="v">' + CONVERT(varchar(30),@bal_after) + '</span></div>
-<div class="kv"><span>Ad-funding amount (balance &times; pct)</span><span class="v big">' + CONVERT(varchar(30),@adfunding_amount) + '</span></div>
+<div class="kv"><span>Total moved to new lender</span><span class="v big">' + CONVERT(varchar(30),@transfer_gross_moved) + '</span></div>
+<div class="kv"><span>Net effect on loan total</span><span class="v">' + CONVERT(varchar(30),@transfer_net_amount) + ' (legs net to zero &mdash; a transfer, not an add)</span></div>
+<table style="margin-top:12px"><thead><tr><th>Leg</th><th>Lender account</th><th>Lender name</th><th>Amount</th></tr></thead>
+<tbody>' + ISNULL(@transfer_rows,'<tr><td colspan="4">No legs</td></tr>') + '</tbody></table>
+<div class="legend">Each current lender is DEBITED (&minus;) its share of the balance; the new lender is CREDITED (+) the sum. This mirrors the existing Excel flow''s two-leg transfer (vw_post_fund_adjustment_base).</div>
 </div>
 
 <div class="card"><h2>9 &middot; Period activity by allocation (window total &times; pct)</h2>
@@ -1062,7 +1143,8 @@ BEGIN
     ), 0);
 
     DECLARE @balance_after decimal(18,4) = ISNULL(@principal, 0) + @net_principal;
-    DECLARE @amount        decimal(18,4) = @balance_after * @fund_percentage;
+    -- @fund_percentage is a PERCENT (100 = 100%); divide by 100 for the multiplier
+    DECLARE @amount        decimal(18,4) = @balance_after * @fund_percentage / 100.0;
 
     UPDATE dbo.fund_adjustment_detail
        SET adjustment_amt    = @amount,

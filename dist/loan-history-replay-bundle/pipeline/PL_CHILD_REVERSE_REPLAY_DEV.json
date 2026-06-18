@@ -203,8 +203,7 @@
                     {
                         "activity": "ForEach_Reverse",
                         "dependencyConditions": [
-                            "Succeeded",
-                            "Completed"
+                            "Succeeded"
                         ]
                     }
                 ],

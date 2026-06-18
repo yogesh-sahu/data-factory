@@ -260,8 +260,8 @@
                 }
             },
             {
-                "name": "IF_REAL_EXECUTE",
-                "type": "IfCondition",
+                "name": "LOOKUP_TRANSFER_GUARD",
+                "type": "Lookup",
                 "dependsOn": [
                     {
                         "activity": "SCR_BUILD_PREVIEW",
@@ -270,10 +270,47 @@
                         ]
                     }
                 ],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "AzureSqlSource",
+                        "sqlReaderQuery": {
+                            "value": "SELECT TOP 1 ISNULL(transfer_leg_count,0) AS transfer_leg_count, CONVERT(varchar(30), ISNULL(transfer_gross_moved,0)) AS transfer_gross_moved FROM dbo.loan_history_preview_summary WHERE loan_account = '@{pipeline().parameters.loan_account}'",
+                            "type": "Expression"
+                        },
+                        "queryTimeout": "02:00:00",
+                        "partitionOption": "None"
+                    },
+                    "dataset": {
+                        "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "firstRowOnly": true
+                }
+            },
+            {
+                "name": "IF_REAL_EXECUTE",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "LOOKUP_TRANSFER_GUARD",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
                 "userProperties": [],
                 "typeProperties": {
                     "expression": {
-                        "value": "@not(pipeline().parameters.dry_run)",
+                        "value": "@and(not(pipeline().parameters.dry_run), greater(float(activity('LOOKUP_TRANSFER_GUARD').output.firstRow.transfer_gross_moved), 0))",
                         "type": "Expression"
                     },
                     "ifTrueActivities": [
@@ -432,7 +469,7 @@
                                 "source": {
                                     "type": "AzureSqlSource",
                                     "sqlReaderQuery": {
-                                        "value": "SELECT TOP 1 CONVERT(varchar(30), phase2_adfunding_amount) AS adfunding_amount FROM dbo.loan_history_preview_summary WHERE loan_account = '@{pipeline().parameters.loan_account}'",
+                                        "value": "SELECT TOP 1 CONVERT(varchar(30), phase2_adfunding_amount) AS adfunding_amount, transfer_api_body FROM dbo.loan_history_preview_summary WHERE loan_account = '@{pipeline().parameters.loan_account}'",
                                         "type": "Expression"
                                     },
                                     "queryTimeout": "02:00:00",
@@ -501,7 +538,7 @@
                                         "type": "Expression"
                                     },
                                     "api_body": {
-                                        "value": "@concat('[{\"LoanAccount\":\"', pipeline().parameters.loan_account, '\",\"LenderAccount\":\"', pipeline().parameters.lender_code, '\",\"TransDate\":\"', formatDateTime(pipeline().parameters.effective_date, 'MM/dd/yyyy'), '\",\"Amount\":\"', activity('LOOKUP_PREVIEW_AMOUNT').output.firstRow.adfunding_amount, '\"}]')",
+                                        "value": "@activity('LOOKUP_PREVIEW_AMOUNT').output.firstRow.transfer_api_body",
                                         "type": "Expression"
                                     }
                                 }
@@ -514,8 +551,6 @@
                                 {
                                     "activity": "EXEC_REVERSE_REPLAY",
                                     "dependencyConditions": [
-                                        "Succeeded",
-                                        "Failed",
                                         "Completed"
                                     ]
                                 }
