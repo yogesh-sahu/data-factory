@@ -1,0 +1,28 @@
+{
+    "name": "[concat(parameters('factoryName'), '/DS_TRANSFER_INPUT')]",
+    "type": "Microsoft.DataFactory/factories/datasets",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "description": "Multi-loan transfer Excel — dev-add-funding-input/transfers/Loan_Transfer.xlsx. One row per loan: AccountNo, LenderCode, AdjustmentType, FundPercentage, EffectiveDate.",
+        "linkedServiceName": {
+            "referenceName": "LS_ADDFUNDING",
+            "type": "LinkedServiceReference"
+        },
+        "annotations": [],
+        "type": "Excel",
+        "typeProperties": {
+            "sheetName": "Sheet1",
+            "location": {
+                "type": "AzureBlobStorageLocation",
+                "fileName": "Loan_Transfer.xlsx",
+                "folderPath": "transfers",
+                "container": "dev-add-funding-input"
+            },
+            "firstRowAsHeader": true
+        },
+        "schema": []
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/linkedServices/LS_ADDFUNDING')]"
+    ]
+}

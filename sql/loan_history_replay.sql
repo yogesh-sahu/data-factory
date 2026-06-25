@@ -1238,3 +1238,46 @@ BEGIN
            1 + ISNULL(@neg_count,0) AS transfer_leg_count;
 END;
 GO
+
+
+------------------------------------------------------------
+-- 16. stg_loan_transfer — landing table for the multi-loan
+--     transfer Excel (PL_LOAD_TRANSFER_DEV). One row per loan.
+--     All varchar so Excel values land without conversion surprises;
+--     the preview proc converts/validates downstream.
+------------------------------------------------------------
+IF OBJECT_ID('dbo.stg_loan_transfer', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.stg_loan_transfer (
+        account_no       varchar(50)  NULL,
+        lender_code      varchar(50)  NULL,
+        adjustment_type  varchar(5)   NULL,
+        fund_percentage  varchar(25)  NULL,
+        effective_date   varchar(30)  NULL
+    );
+END;
+GO
+
+
+------------------------------------------------------------
+-- 17. loan_transfer_log — PERSISTENT idempotency ledger for the
+--     multi-loan transfer batch (PL_LOAD_TRANSFER_DEV). One row
+--     per (loan, lender, effective_date) actually posted to TMO.
+--     NEVER truncated. The batch skips any (loan,lender,date)
+--     already here, so a re-run after a partial failure RESUMES
+--     instead of double-posting.
+------------------------------------------------------------
+IF OBJECT_ID('dbo.loan_transfer_log', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.loan_transfer_log (
+        log_id          bigint IDENTITY(1,1) PRIMARY KEY,
+        account_no      varchar(50)  NOT NULL,
+        lender_code     varchar(50)  NOT NULL,
+        effective_date  varchar(20)  NULL,
+        fund_percentage varchar(25)  NULL,
+        posted_on       datetime     NOT NULL DEFAULT GETDATE()
+    );
+    CREATE NONCLUSTERED INDEX IX_loan_transfer_log_key
+        ON dbo.loan_transfer_log (account_no, lender_code, effective_date);
+END;
+GO

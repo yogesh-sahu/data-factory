@@ -1,0 +1,425 @@
+{
+    "name": "[concat(parameters('factoryName'), '/PL_LOAD_TRANSFER_DEV')]",
+    "type": "Microsoft.DataFactory/factories/pipelines",
+    "apiVersion": "2018-06-01",
+    "properties": {
+        "description": "Multi-loan transfer batch. Reads transfers/Loan_Transfer.xlsx (one row per loan), then for each loan runs the validated PL_PREVIEW_REVERSE_REPLAY_DEV with dry_run=false (reverse -> measured multi-leg transfer -> replay). Deletes the file after processing to prevent re-posting.",
+        "activities": [
+            {
+                "name": "CHECK_IF_FILE_EXISTS",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.12:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "DS_TRANSFER_INPUT",
+                        "type": "DatasetReference",
+                        "parameters": {}
+                    },
+                    "fieldList": [
+                        "exists"
+                    ],
+                    "storeSettings": {
+                        "type": "AzureBlobStorageReadSettings",
+                        "recursive": true,
+                        "enablePartitionDiscovery": false
+                    }
+                }
+            },
+            {
+                "name": "If Condition1",
+                "type": "IfCondition",
+                "dependsOn": [
+                    {
+                        "activity": "CHECK_IF_FILE_EXISTS",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "expression": {
+                        "value": "@activity('CHECK_IF_FILE_EXISTS').output.exists",
+                        "type": "Expression"
+                    },
+                    "ifTrueActivities": [
+                        {
+                            "name": "COPY_TO_STAGING",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "ExcelSource",
+                                    "storeSettings": {
+                                        "type": "AzureBlobStorageReadSettings",
+                                        "recursive": true,
+                                        "enablePartitionDiscovery": false
+                                    }
+                                },
+                                "sink": {
+                                    "type": "AzureSqlSink",
+                                    "preCopyScript": "TRUNCATE TABLE dbo.stg_loan_transfer",
+                                    "writeBehavior": "insert",
+                                    "sqlWriterUseTableLock": false,
+                                    "disableMetricsCollection": false
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "mappings": [
+                                        {
+                                            "source": {
+                                                "name": "AccountNo",
+                                                "type": "String"
+                                            },
+                                            "sink": {
+                                                "name": "account_no",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "LenderCode",
+                                                "type": "String"
+                                            },
+                                            "sink": {
+                                                "name": "lender_code",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "AdjustmentType",
+                                                "type": "String"
+                                            },
+                                            "sink": {
+                                                "name": "adjustment_type",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "FundPercentage",
+                                                "type": "String"
+                                            },
+                                            "sink": {
+                                                "name": "fund_percentage",
+                                                "type": "String"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "EffectiveDate",
+                                                "type": "String"
+                                            },
+                                            "sink": {
+                                                "name": "effective_date",
+                                                "type": "String"
+                                            }
+                                        }
+                                    ],
+                                    "typeConversion": true,
+                                    "typeConversionSettings": {
+                                        "allowDataTruncation": true,
+                                        "treatBooleanAsNumber": false
+                                    }
+                                }
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "DS_TRANSFER_INPUT",
+                                    "type": "DatasetReference",
+                                    "parameters": {}
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                    "type": "DatasetReference",
+                                    "parameters": {}
+                                }
+                            ]
+                        },
+                        {
+                            "name": "LOOKUP_TRANSFER_ROWS",
+                            "type": "Lookup",
+                            "dependsOn": [
+                                {
+                                    "activity": "COPY_TO_STAGING",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "AzureSqlSource",
+                                    "sqlReaderQuery": "SELECT account_no, lender_code, adjustment_type, fund_percentage, CONVERT(varchar(10), TRY_CONVERT(date, effective_date), 23) AS effective_date FROM dbo.stg_loan_transfer WHERE ISNULL(account_no,'') <> '' AND ISNULL(lender_code,'') <> ''",
+                                    "queryTimeout": "02:00:00",
+                                    "partitionOption": "None"
+                                },
+                                "dataset": {
+                                    "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                    "type": "DatasetReference",
+                                    "parameters": {}
+                                },
+                                "firstRowOnly": false
+                            }
+                        },
+                        {
+                            "name": "ForEach_Loan",
+                            "type": "ForEach",
+                            "dependsOn": [
+                                {
+                                    "activity": "LOOKUP_TRANSFER_ROWS",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "userProperties": [],
+                            "typeProperties": {
+                                "items": {
+                                    "value": "@activity('LOOKUP_TRANSFER_ROWS').output.value",
+                                    "type": "Expression"
+                                },
+                                "isSequential": true,
+                                "activities": [
+                                    {
+                                        "name": "LOOKUP_ALREADY_POSTED",
+                                        "type": "Lookup",
+                                        "dependsOn": [],
+                                        "policy": {
+                                            "timeout": "0.12:00:00",
+                                            "retry": 0,
+                                            "retryIntervalInSeconds": 30,
+                                            "secureOutput": false,
+                                            "secureInput": false
+                                        },
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "source": {
+                                                "type": "AzureSqlSource",
+                                                "sqlReaderQuery": {
+                                                    "value": "SELECT COUNT(*) AS cnt FROM dbo.loan_transfer_log WHERE account_no = '@{item().account_no}' AND lender_code = '@{item().lender_code}' AND ISNULL(effective_date,'') = ISNULL('@{item().effective_date}','')",
+                                                    "type": "Expression"
+                                                },
+                                                "queryTimeout": "02:00:00",
+                                                "partitionOption": "None"
+                                            },
+                                            "dataset": {
+                                                "referenceName": "DS_AZURE_SQL_CAL_DEV",
+                                                "type": "DatasetReference",
+                                                "parameters": {}
+                                            },
+                                            "firstRowOnly": true
+                                        }
+                                    },
+                                    {
+                                        "name": "IF_NOT_POSTED",
+                                        "type": "IfCondition",
+                                        "dependsOn": [
+                                            {
+                                                "activity": "LOOKUP_ALREADY_POSTED",
+                                                "dependencyConditions": [
+                                                    "Succeeded"
+                                                ]
+                                            }
+                                        ],
+                                        "userProperties": [],
+                                        "typeProperties": {
+                                            "expression": {
+                                                "value": "@equals(activity('LOOKUP_ALREADY_POSTED').output.firstRow.cnt, 0)",
+                                                "type": "Expression"
+                                            },
+                                            "ifTrueActivities": [
+                                                {
+                                                    "name": "EXEC_TRANSFER_ONE_LOAN",
+                                                    "type": "ExecutePipeline",
+                                                    "dependsOn": [],
+                                                    "policy": {
+                                                        "secureInput": false
+                                                    },
+                                                    "userProperties": [],
+                                                    "typeProperties": {
+                                                        "pipeline": {
+                                                            "referenceName": "PL_PREVIEW_REVERSE_REPLAY_DEV",
+                                                            "type": "PipelineReference"
+                                                        },
+                                                        "waitOnCompletion": true,
+                                                        "parameters": {
+                                                            "loan_account": {
+                                                                "value": "@item().account_no",
+                                                                "type": "Expression"
+                                                            },
+                                                            "effective_date": {
+                                                                "value": "@item().effective_date",
+                                                                "type": "Expression"
+                                                            },
+                                                            "lender_code": {
+                                                                "value": "@item().lender_code",
+                                                                "type": "Expression"
+                                                            },
+                                                            "fund_percentage": {
+                                                                "value": "@item().fund_percentage",
+                                                                "type": "Expression"
+                                                            },
+                                                            "dry_run": {
+                                                                "value": "@bool('false')",
+                                                                "type": "Expression"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                {
+                                                    "name": "SCR_LOG_POSTED",
+                                                    "type": "Script",
+                                                    "dependsOn": [
+                                                        {
+                                                            "activity": "EXEC_TRANSFER_ONE_LOAN",
+                                                            "dependencyConditions": [
+                                                                "Succeeded"
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "policy": {
+                                                        "timeout": "0.12:00:00",
+                                                        "retry": 0,
+                                                        "retryIntervalInSeconds": 30,
+                                                        "secureOutput": false,
+                                                        "secureInput": false
+                                                    },
+                                                    "userProperties": [],
+                                                    "linkedServiceName": {
+                                                        "referenceName": "LS_AzureSql_CAL_DEV",
+                                                        "type": "LinkedServiceReference"
+                                                    },
+                                                    "typeProperties": {
+                                                        "scripts": [
+                                                            {
+                                                                "parameters": [
+                                                                    {
+                                                                        "name": "account_no",
+                                                                        "type": "String",
+                                                                        "value": {
+                                                                            "value": "@item().account_no",
+                                                                            "type": "Expression"
+                                                                        },
+                                                                        "direction": "Input"
+                                                                    },
+                                                                    {
+                                                                        "name": "lender_code",
+                                                                        "type": "String",
+                                                                        "value": {
+                                                                            "value": "@item().lender_code",
+                                                                            "type": "Expression"
+                                                                        },
+                                                                        "direction": "Input"
+                                                                    },
+                                                                    {
+                                                                        "name": "effective_date",
+                                                                        "type": "String",
+                                                                        "value": {
+                                                                            "value": "@item().effective_date",
+                                                                            "type": "Expression"
+                                                                        },
+                                                                        "direction": "Input"
+                                                                    },
+                                                                    {
+                                                                        "name": "fund_percentage",
+                                                                        "type": "String",
+                                                                        "value": {
+                                                                            "value": "@item().fund_percentage",
+                                                                            "type": "Expression"
+                                                                        },
+                                                                        "direction": "Input"
+                                                                    }
+                                                                ],
+                                                                "type": "Query",
+                                                                "text": "INSERT INTO dbo.loan_transfer_log (account_no, lender_code, effective_date, fund_percentage) VALUES (@account_no, @lender_code, @effective_date, @fund_percentage)"
+                                                            }
+                                                        ],
+                                                        "scriptBlockExecutionTimeout": "02:00:00"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "name": "DELETE_SOURCE_FILE",
+                            "type": "Delete",
+                            "dependsOn": [
+                                {
+                                    "activity": "ForEach_Loan",
+                                    "dependencyConditions": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            ],
+                            "policy": {
+                                "timeout": "0.12:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "dataset": {
+                                    "referenceName": "DS_TRANSFER_INPUT",
+                                    "type": "DatasetReference",
+                                    "parameters": {}
+                                },
+                                "enableLogging": false,
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ],
+        "policy": {
+            "elapsedTimeMetric": {}
+        },
+        "folder": {
+            "name": "CAL_DEV"
+        },
+        "annotations": []
+    },
+    "dependsOn": [
+        "[concat(variables('factoryId'), '/datasets/DS_TRANSFER_INPUT')]",
+        "[concat(variables('factoryId'), '/datasets/DS_AZURE_SQL_CAL_DEV')]",
+        "[concat(variables('factoryId'), '/pipelines/PL_PREVIEW_REVERSE_REPLAY_DEV')]"
+    ]
+}
