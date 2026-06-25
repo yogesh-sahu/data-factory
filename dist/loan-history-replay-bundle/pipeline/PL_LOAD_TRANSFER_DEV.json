@@ -155,8 +155,8 @@
                             ]
                         },
                         {
-                            "name": "LOOKUP_TRANSFER_ROWS",
-                            "type": "Lookup",
+                            "name": "EXEC_TRANSFER_FOREACH",
+                            "type": "ExecutePipeline",
                             "dependsOn": [
                                 {
                                     "activity": "COPY_TO_STAGING",
@@ -166,208 +166,16 @@
                                 }
                             ],
                             "policy": {
-                                "timeout": "0.12:00:00",
-                                "retry": 0,
-                                "retryIntervalInSeconds": 30,
-                                "secureOutput": false,
                                 "secureInput": false
                             },
                             "userProperties": [],
                             "typeProperties": {
-                                "source": {
-                                    "type": "AzureSqlSource",
-                                    "sqlReaderQuery": "SELECT account_no, lender_code, adjustment_type, fund_percentage, CONVERT(varchar(10), TRY_CONVERT(date, effective_date), 23) AS effective_date FROM dbo.stg_loan_transfer WHERE ISNULL(account_no,'') <> '' AND ISNULL(lender_code,'') <> ''",
-                                    "queryTimeout": "02:00:00",
-                                    "partitionOption": "None"
+                                "pipeline": {
+                                    "referenceName": "PL_CHILD_TRANSFER_FOREACH_DEV",
+                                    "type": "PipelineReference"
                                 },
-                                "dataset": {
-                                    "referenceName": "DS_AZURE_SQL_CAL_DEV",
-                                    "type": "DatasetReference",
-                                    "parameters": {}
-                                },
-                                "firstRowOnly": false
-                            }
-                        },
-                        {
-                            "name": "ForEach_Loan",
-                            "type": "ForEach",
-                            "dependsOn": [
-                                {
-                                    "activity": "LOOKUP_TRANSFER_ROWS",
-                                    "dependencyConditions": [
-                                        "Succeeded"
-                                    ]
-                                }
-                            ],
-                            "userProperties": [],
-                            "typeProperties": {
-                                "items": {
-                                    "value": "@activity('LOOKUP_TRANSFER_ROWS').output.value",
-                                    "type": "Expression"
-                                },
-                                "isSequential": true,
-                                "activities": [
-                                    {
-                                        "name": "LOOKUP_ALREADY_POSTED",
-                                        "type": "Lookup",
-                                        "dependsOn": [],
-                                        "policy": {
-                                            "timeout": "0.12:00:00",
-                                            "retry": 0,
-                                            "retryIntervalInSeconds": 30,
-                                            "secureOutput": false,
-                                            "secureInput": false
-                                        },
-                                        "userProperties": [],
-                                        "typeProperties": {
-                                            "source": {
-                                                "type": "AzureSqlSource",
-                                                "sqlReaderQuery": {
-                                                    "value": "SELECT COUNT(*) AS cnt FROM dbo.loan_transfer_log WHERE account_no = '@{item().account_no}' AND lender_code = '@{item().lender_code}' AND ISNULL(effective_date,'') = ISNULL('@{item().effective_date}','')",
-                                                    "type": "Expression"
-                                                },
-                                                "queryTimeout": "02:00:00",
-                                                "partitionOption": "None"
-                                            },
-                                            "dataset": {
-                                                "referenceName": "DS_AZURE_SQL_CAL_DEV",
-                                                "type": "DatasetReference",
-                                                "parameters": {}
-                                            },
-                                            "firstRowOnly": true
-                                        }
-                                    },
-                                    {
-                                        "name": "IF_NOT_POSTED",
-                                        "type": "IfCondition",
-                                        "dependsOn": [
-                                            {
-                                                "activity": "LOOKUP_ALREADY_POSTED",
-                                                "dependencyConditions": [
-                                                    "Succeeded"
-                                                ]
-                                            }
-                                        ],
-                                        "userProperties": [],
-                                        "typeProperties": {
-                                            "expression": {
-                                                "value": "@equals(activity('LOOKUP_ALREADY_POSTED').output.firstRow.cnt, 0)",
-                                                "type": "Expression"
-                                            },
-                                            "ifTrueActivities": [
-                                                {
-                                                    "name": "EXEC_TRANSFER_ONE_LOAN",
-                                                    "type": "ExecutePipeline",
-                                                    "dependsOn": [],
-                                                    "policy": {
-                                                        "secureInput": false
-                                                    },
-                                                    "userProperties": [],
-                                                    "typeProperties": {
-                                                        "pipeline": {
-                                                            "referenceName": "PL_PREVIEW_REVERSE_REPLAY_DEV",
-                                                            "type": "PipelineReference"
-                                                        },
-                                                        "waitOnCompletion": true,
-                                                        "parameters": {
-                                                            "loan_account": {
-                                                                "value": "@item().account_no",
-                                                                "type": "Expression"
-                                                            },
-                                                            "effective_date": {
-                                                                "value": "@item().effective_date",
-                                                                "type": "Expression"
-                                                            },
-                                                            "lender_code": {
-                                                                "value": "@item().lender_code",
-                                                                "type": "Expression"
-                                                            },
-                                                            "fund_percentage": {
-                                                                "value": "@item().fund_percentage",
-                                                                "type": "Expression"
-                                                            },
-                                                            "dry_run": {
-                                                                "value": "@bool('false')",
-                                                                "type": "Expression"
-                                                            }
-                                                        }
-                                                    }
-                                                },
-                                                {
-                                                    "name": "SCR_LOG_POSTED",
-                                                    "type": "Script",
-                                                    "dependsOn": [
-                                                        {
-                                                            "activity": "EXEC_TRANSFER_ONE_LOAN",
-                                                            "dependencyConditions": [
-                                                                "Succeeded"
-                                                            ]
-                                                        }
-                                                    ],
-                                                    "policy": {
-                                                        "timeout": "0.12:00:00",
-                                                        "retry": 0,
-                                                        "retryIntervalInSeconds": 30,
-                                                        "secureOutput": false,
-                                                        "secureInput": false
-                                                    },
-                                                    "userProperties": [],
-                                                    "linkedServiceName": {
-                                                        "referenceName": "LS_AzureSql_CAL_DEV",
-                                                        "type": "LinkedServiceReference"
-                                                    },
-                                                    "typeProperties": {
-                                                        "scripts": [
-                                                            {
-                                                                "parameters": [
-                                                                    {
-                                                                        "name": "account_no",
-                                                                        "type": "String",
-                                                                        "value": {
-                                                                            "value": "@item().account_no",
-                                                                            "type": "Expression"
-                                                                        },
-                                                                        "direction": "Input"
-                                                                    },
-                                                                    {
-                                                                        "name": "lender_code",
-                                                                        "type": "String",
-                                                                        "value": {
-                                                                            "value": "@item().lender_code",
-                                                                            "type": "Expression"
-                                                                        },
-                                                                        "direction": "Input"
-                                                                    },
-                                                                    {
-                                                                        "name": "effective_date",
-                                                                        "type": "String",
-                                                                        "value": {
-                                                                            "value": "@item().effective_date",
-                                                                            "type": "Expression"
-                                                                        },
-                                                                        "direction": "Input"
-                                                                    },
-                                                                    {
-                                                                        "name": "fund_percentage",
-                                                                        "type": "String",
-                                                                        "value": {
-                                                                            "value": "@item().fund_percentage",
-                                                                            "type": "Expression"
-                                                                        },
-                                                                        "direction": "Input"
-                                                                    }
-                                                                ],
-                                                                "type": "Query",
-                                                                "text": "INSERT INTO dbo.loan_transfer_log (account_no, lender_code, effective_date, fund_percentage) VALUES (@account_no, @lender_code, @effective_date, @fund_percentage)"
-                                                            }
-                                                        ],
-                                                        "scriptBlockExecutionTimeout": "02:00:00"
-                                                    }
-                                                }
-                                            ]
-                                        }
-                                    }
-                                ]
+                                "waitOnCompletion": true,
+                                "parameters": {}
                             }
                         },
                         {
@@ -375,7 +183,7 @@
                             "type": "Delete",
                             "dependsOn": [
                                 {
-                                    "activity": "ForEach_Loan",
+                                    "activity": "EXEC_TRANSFER_FOREACH",
                                     "dependencyConditions": [
                                         "Succeeded"
                                     ]

@@ -1,24 +1,24 @@
 {
-    "name": "DS_TRANSFER_INPUT",
-    "properties": {
-        "description": "Multi-loan transfer Excel \u2014 dev-add-funding-input/transfers/Loan_Transfer.xlsx. One row per loan: AccountNo, LenderCode, AdjustmentType, FundPercentage, EffectiveDate.",
-        "linkedServiceName": {
-            "referenceName": "LS_ADDFUNDING",
-            "type": "LinkedServiceReference"
-        },
-        "annotations": [],
-        "type": "Excel",
-        "typeProperties": {
-            "sheetName": "Sheet1",
-            "location": {
-                "type": "AzureBlobStorageLocation",
-                "fileName": "Loan_Transfer.xlsx",
-                "folderPath": "transfers",
-                "container": "dev-add-funding-input"
-            },
-            "firstRowAsHeader": true
-        },
-        "schema": []
+  "name": "DS_TRANSFER_INPUT",
+  "properties": {
+    "description": "Multi-loan transfer Excel \u2014 dev-add-funding-input/transfers/Loan_Transfer.xlsx. One row per loan: AccountNo, LenderCode, AdjustmentType, FundPercentage, EffectiveDate.",
+    "linkedServiceName": {
+      "referenceName": "LS_ADDFUNDING",
+      "type": "LinkedServiceReference"
     },
-    "type": "Microsoft.DataFactory/factories/datasets"
+    "annotations": [],
+    "type": "Excel",
+    "typeProperties": {
+      "sheetName": "Sheet1",
+      "location": {
+        "type": "AzureBlobStorageLocation",
+        "fileName": "Loan_Transfer.xlsx",
+        "folderPath": "transfers",
+        "container": "dev-add-funding-input"
+      },
+      "firstRowAsHeader": true
+    },
+    "schema": []
+  },
+  "type": "Microsoft.DataFactory/factories/datasets"
 }
